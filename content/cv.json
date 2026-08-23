@@ -1,20 +1,20 @@
 {
   "entries": [
     {
+      "id": "cv-magister",
       "section": "pendidikan",
       "title_id": "Magister Teknik Sipil - Teknik Struktur",
+      "title_en": null,
       "organization": "Universitas Gadjah Mada",
       "location": "Yogyakarta",
-      "description_id": "Fokus riset: dinamika struktur dan sistem peredam getaran. Tesis mengenai efektivitas damper pada struktur slab on pile.",
-      "title_en": null,
-      "description_en": null,
-      "start_date": "2026-08-01",
+      "start_date": "2024-08-01",
       "end_date": null,
       "is_current": true,
+      "description_id": "Fokus riset: dinamika struktur dan sistem peredam getaran. Tesis mengenai efektivitas damper pada struktur slab on pile.",
+      "description_en": null,
       "url": null,
       "sort_order": 1,
-      "is_published": true,
-      "id": "cv-magister"
+      "is_published": true
     },
     {
       "id": "cv-asisten-peneliti",
@@ -97,20 +97,20 @@
       "is_published": true
     },
     {
-      "id": "cv-sarjana",
       "section": "pendidikan",
       "title_id": "Sarjana Teknik Sipil",
-      "title_en": null,
       "organization": "Universitas Gadjah Mada",
       "location": "Yogyakarta",
-      "start_date": "2020-08-01",
-      "end_date": "2024-07-01",
-      "is_current": false,
       "description_id": "Skripsi di bidang rekayasa struktur. Aktif di kompetisi jembatan dan organisasi himpunan mahasiswa.",
+      "title_en": null,
       "description_en": null,
+      "start_date": "2023-08-01",
+      "end_date": "2024-07-01",
+      "is_current": true,
       "url": null,
       "sort_order": 2,
-      "is_published": true
+      "is_published": true,
+      "id": "cv-sarjana"
     },
     {
       "id": "cv-asisten-praktikum",
