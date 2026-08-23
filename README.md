@@ -1,14 +1,14 @@
 # Website pribadi — Rizki Haikal
 
-Portofolio, tulisan, arsip kuliah, dan (nanti) ruang kerja riset privat.
-Satu sistem, tiga lapis akses, semuanya disunting lewat panel admin tanpa
-menyentuh kode.
+Portofolio, tulisan, arsip kuliah, dan area Kerja pribadi (arsip proyek ala
+Notion). Satu sistem, tiga lapis akses, semuanya disunting lewat panel admin
+tanpa menyentuh kode.
 
 | Lapis | Isi | Gerbang |
 |---|---|---|
 | Publik | Profil, CV, portofolio, tulisan | — |
 | Semi-publik | Arsip kuliah S1 & S2 | Login Google berdomain UGM |
-| Privat | Panel admin — dan nanti riset, checklist, automasi | Login Google alamat pemilik |
+| Privat | Panel admin, termasuk area Kerja (proyek/tugas/catatan/jadwal) | Login Google alamat pemilik |
 
 **Stack.** Next.js 15 (App Router) · TypeScript · Tailwind CSS v4 ·
 Auth.js v5 · Vercel.
@@ -215,6 +215,7 @@ mengunduh apa.
 | `/admin/tulisan` | Tulisan dengan tiga tingkat privasi |
 | `/admin/arsip` | Mata kuliah dan berkasnya |
 | `/admin/log` | Jejak siapa mengunduh apa |
+| `/admin/kerja` | Area Kerja — proyek, papan tugas, catatan, jadwal (lihat §10) |
 
 ### Tiga tingkat privasi tulisan
 
@@ -260,14 +261,17 @@ src/
 │   │   ├── arsip/                daftar + detail (bergerbang)
 │   │   └── masuk/                halaman login
 │   ├── admin/            # Panel admin — layout & penjaga sendiri
-│   │   └── actions.ts            menulis balik ke content/
+│   │   ├── actions.ts             menulis balik ke content/
+│   │   └── kerja/                 area Kerja (§10) — proyek, papan tugas, jadwal
 │   ├── api/
-│   │   ├── auth/                 Auth.js
-│   │   └── arsip/[itemId]/unduh/ satu-satunya jalan ke berkas
+│   │   ├── auth/                  Auth.js
+│   │   ├── arsip/[itemId]/unduh/  satu-satunya jalan ke berkas
+│   │   └── cron/sinkron-kalender/ sisi "masuk" sinkron dua arah Calendar
 │   └── actions/          # Server action masuk/keluar
 ├── components/
 │   ├── ui/primitives.tsx # Tombol, isian, badge, wadah
 │   ├── admin/            # Formulir generik, tabel, navigasi
+│   ├── kerja/            # Papan Kanban, catatan, jadwal, sidebar area Kerja
 │   └── …                 # Header, footer, kartu, gerbang UGM
 └── lib/
     ├── content.ts        # Baca konten dari berkas
@@ -275,6 +279,12 @@ src/
     ├── google.ts         # Kredensial service account bersama
     ├── drive.ts          # Dua mode akses Drive
     ├── sheets.ts         # Jejak akses
+    ├── sheets-db.ts       # Mesin baca-tulis Sheets generik, dasar area Kerja
+    ├── calendar.ts        # Sinkron dua arah Google Calendar
+    ├── workspace-sheets.ts   # CRUD area Kerja di atas Sheets
+    ├── workspace-actions.ts  # Server action area Kerja + dorong ke Calendar
+    ├── workspace-types.ts    # Bentuk data area Kerja
+    ├── workspace-utils.ts    # Format tanggal/jam, agenda gabungan
     ├── auth.ts           # Peran & aturan domain UGM
     ├── queries.ts        # Baca untuk halaman publik
     ├── admin-queries.ts  # Baca untuk panel (termasuk draf)
@@ -300,14 +310,77 @@ header.
 
 ---
 
-## 10. Yang belum dibangun (fase 2)
+## 10. Area Kerja (fase 2)
 
-Ruang kerja riset privat: proyek riset, checklist, target mingguan, dan
-dorongan satu arah ke Google Calendar.
+`/admin/kerja` adalah arsip proyek pribadi ala Notion: proyek, papan tugas
+(Kanban), catatan/materi per proyek, dan jadwal — semuanya dua arah dengan
+Google Calendar. Sampai langkah setup di bawah selesai, halamannya tetap bisa
+dibuka dan cuma menampilkan petunjuk setup — tidak error.
 
-Pembagian tempatnya mengikuti pola yang sama seperti sekarang — catatan dan
-materi riset sebagai berkas di `content/research/`, sedangkan checklist dan
-status tugas yang sering berubah di Google Sheets, bukan di repositori.
+**Kenapa datanya bukan di `content/` seperti konten lain.** Tugas dicentang,
+kartu digeser, catatan direvisi — semua bisa berkali-kali dalam satu hari.
+Kalau disimpan sebagai berkas git seperti proyek/tulisan, setiap perubahan
+kecil jadi satu commit dan harus menunggu Vercel deploy ulang (±1 menit)
+sebelum kelihatan. Jadi semuanya (termasuk catatan, bukan cuma checklist)
+disimpan di satu spreadsheet Google Sheets terpisah — sama alasannya dengan
+jejak akses di §5, cuma datanya lebih banyak jenisnya.
+
+### 10.1 Siapkan spreadsheet-nya
+
+1. Buat satu spreadsheet Google Sheets baru (terpisah dari spreadsheet jejak
+   akses di §5).
+2. Buat 5 tab (klik tanda **+** di pojok kiri bawah), beri nama PERSIS seperti
+   ini, dan isi baris pertama tiap tab dengan judul kolom berikut:
+
+   | Nama tab | Judul kolom (baris pertama) |
+   |---|---|
+   | `Proyek` | `id, judul, deskripsi, status, warna, dibuat_pada, diubah_pada, dihapus` |
+   | `Tugas` | `id, proyek_id, judul, deskripsi, status, prioritas, tenggat, urutan, calendar_event_id, calendar_diubah_pada, dibuat_pada, diubah_pada, dihapus` |
+   | `Catatan` | `id, proyek_id, judul, isi, dibuat_pada, diubah_pada, dihapus` |
+   | `Jadwal` | `id, proyek_id, judul, deskripsi, mulai, selesai, lokasi, calendar_event_id, calendar_diubah_pada, dibuat_pada, diubah_pada, dihapus` |
+   | `Sinkron` | `kunci, nilai` |
+
+3. Bagikan spreadsheet-nya ke alamat service account yang sama dipakai
+   Drive/Sheets (`GOOGLE_SERVICE_ACCOUNT_EMAIL`, lihat §5) sebagai **Editor**.
+4. Salin ID-nya dari URL — `docs.google.com/spreadsheets/d/<ID>/edit` — lalu
+   isi `GOOGLE_SHEETS_KERJA_ID`.
+
+Kolom `dihapus` bukan salah ketik — item yang "dihapus" cuma ditandai di
+kolom itu, barisnya tidak sungguh-sungguh dibuang, supaya baris lain tidak
+ikut bergeser nomornya.
+
+### 10.2 Siapkan sinkron Google Calendar
+
+Sinkronnya **dua arah**: tugas bertenggat & jadwal yang dibuat di situs
+otomatis muncul di Calendar, dan sebaliknya — edit langsung di Calendar
+(misalnya dari HP) ikut masuk balik ke situs saat sinkron berjalan.
+
+1. Buat kalender Google baru (atau pakai yang sudah ada) — di Google
+   Calendar, klik **+** di samping "Kalender lain" → **Buat kalender baru**.
+2. Buka **Setelan dan berbagi** kalender itu → bagian **Bagikan dengan orang
+   tertentu** → tambahkan alamat service account (`GOOGLE_SERVICE_ACCOUNT_EMAIL`)
+   dengan izin **"Membuat perubahan pada acara"** (bukan cuma "Melihat").
+3. Masih di halaman setelan yang sama, salin **"ID kalender integrasi"** —
+   bentuknya seperti alamat email panjang berakhiran
+   `@group.calendar.google.com`, BUKAN kata `primary`.
+4. Isi `GOOGLE_CALENDAR_ID` dengan ID itu.
+
+### 10.3 Sinkron masuk berjalan lewat cron
+
+Sisi "situs → Calendar" terjadi seketika setiap tugas/jadwal disimpan. Sisi
+sebaliknya ("Calendar → situs") diperiksa berkala oleh Vercel Cron, sudah
+disetel di `vercel.json` (tiap 10 menit), memanggil
+`/api/cron/sinkron-kalender`.
+
+**Catatan paket Vercel gratis (Hobby):** cron pada paket ini bisa dibatasi
+jalan cuma sekali sehari, bukan tiap 10 menit. Kalau itu terjadi, pakai tombol
+**"Sinkron Calendar sekarang"** di `/admin/kerja` untuk memicu manual selagi
+masuk sebagai admin, atau pertimbangkan naik ke paket Pro kalau sinkron
+real-time penting.
+
+Opsional: isi `CRON_SECRET` dengan teks acak supaya endpoint sinkron tidak
+bisa dipicu sembarang orang — Vercel otomatis mengirim nilai itu tiap
+memanggil cron-nya sendiri.
 
 ---
 

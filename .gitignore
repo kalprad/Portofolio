@@ -11,5 +11,12 @@ npm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Kunci service account Google — JANGAN PERNAH commit. Nilainya sudah
+# ditempel ke .env.local sebagai GOOGLE_SERVICE_ACCOUNT_KEY; berkas mentahnya
+# tidak perlu (dan tidak boleh) ikut ke repositori.
+*-service-account*.json
+service-account*.json
+portofolio-506410-*.json
+
 # Berkas mentah. Versi siap-web-nya sudah ada di public/.
 Media
