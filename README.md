@@ -372,11 +372,13 @@ sebaliknya ("Calendar → situs") diperiksa berkala oleh Vercel Cron, sudah
 disetel di `vercel.json` (tiap 10 menit), memanggil
 `/api/cron/sinkron-kalender`.
 
-**Catatan paket Vercel gratis (Hobby):** cron pada paket ini bisa dibatasi
-jalan cuma sekali sehari, bukan tiap 10 menit. Kalau itu terjadi, pakai tombol
-**"Sinkron Calendar sekarang"** di `/admin/kerja` untuk memicu manual selagi
-masuk sebagai admin, atau pertimbangkan naik ke paket Pro kalau sinkron
-real-time penting.
+**Catatan paket Vercel gratis (Hobby):** cron di paket ini CUMA BOLEH jalan
+sekali sehari — jadwal yang lebih sering dari itu bikin deployment langsung
+gagal (bukan cuma dibatasi, tapi ditolak total). Karena itu `vercel.json` di
+sini disetel `0 23 * * *` (jam 23:00 UTC = 06:00 WIB, sekali sehari). Kalau
+butuh sinkron lebih cepat dari itu, pakai tombol **"Sinkron Calendar
+sekarang"** di `/admin/kerja` buat memicu manual selagi masuk sebagai admin,
+atau naik ke paket Pro (cron per-menit) kalau sinkron real-time penting.
 
 Opsional: isi `CRON_SECRET` dengan teks acak supaya endpoint sinkron tidak
 bisa dipicu sembarang orang — Vercel otomatis mengirim nilai itu tiap
