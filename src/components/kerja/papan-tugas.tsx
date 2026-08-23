@@ -185,17 +185,20 @@ export function PapanTugas({ proyekId, tugasAwal }: { proyekId: string; tugasAwa
   useEffect(() => setTugas(tugasAwal), [tugasAwal]);
 
   function pindah(id: string, status: TaskStatus) {
-    setTugas((prev) => {
-      const kolom = prev.filter((t) => t.status === status && t.id !== id);
-      const urutan = kolom.length ? Math.max(...kolom.map((t) => t.urutan)) + 1 : 1;
-      const next = prev.map((t) => (t.id === id ? { ...t, status, urutan } : t));
+    // Hitung nilai barunya dari state SEKARANG, di luar updater — updater
+    // `setTugas` harus murni (tidak boleh punya efek samping seperti
+    // memanggil startTransition di dalamnya). React boleh memanggil updater
+    // lebih dari sekali; kalau startTransition ikut di dalam, transisinya
+    // bisa nyangkut dan interaksi berikutnya di papan jadi tidak merespons
+    // sama sekali sampai halaman dimuat ulang — itu bug yang barusan kejadian.
+    const kolom = tugas.filter((t) => t.status === status && t.id !== id);
+    const urutan = kolom.length ? Math.max(...kolom.map((t) => t.urutan)) + 1 : 1;
 
-      startTransition(async () => {
-        await pindahkanTugas(id, proyekId, status, urutan);
-        router.refresh();
-      });
+    setTugas((prev) => prev.map((t) => (t.id === id ? { ...t, status, urutan } : t)));
 
-      return next;
+    startTransition(async () => {
+      await pindahkanTugas(id, proyekId, status, urutan);
+      router.refresh();
     });
   }
 

@@ -3,7 +3,10 @@ import { KerjaSidebar } from "@/components/kerja/kerja-sidebar";
 import { listProjects, workspaceSheetsConfigured } from "@/lib/workspace-sheets";
 
 export const metadata: Metadata = {
-  title: { default: "Kerja", template: "%s · Kerja · Panel Admin" },
+  title: { default: "Ultraproduktif", template: "%s · Ultraproduktif" },
+  // Privat — cuma pemilik situs yang bisa membuka (dijaga middleware), tapi
+  // tetap tidak perlu masuk indeks mesin pencari.
+  robots: { index: false, follow: false },
 };
 
 // Halaman ini bergantung pada Google Sheets/Calendar yang bisa gagal (kunci

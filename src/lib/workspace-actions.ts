@@ -27,10 +27,10 @@ async function pastikanAdmin(): Promise<void> {
 
 const SHEETS_BELUM_SIAP: FormState = {
   ok: false,
-  message: "Sheets area Kerja belum disetel. Isi GOOGLE_SHEETS_KERJA_ID di environment variable dulu.",
+  message: "Sheets Ultraproduktif belum disetel. Isi GOOGLE_SHEETS_KERJA_ID di environment variable dulu.",
 };
 
-/** Dipakai action yang mengembalikan FormState — `/admin/kerja/proyek/baru` dan `/jadwal` tetap bisa dibuka lewat URL langsung walau Sheets belum disetel. */
+/** Dipakai action yang mengembalikan FormState — `/ultraproduktif/proyek/baru` dan `/jadwal` tetap bisa dibuka lewat URL langsung walau Sheets belum disetel. */
 function butuhSheets(): FormState | null {
   return ws.workspaceSheetsConfigured() ? null : SHEETS_BELUM_SIAP;
 }
@@ -47,9 +47,9 @@ function pesanGalat(err: unknown): FormState {
 }
 
 function refreshKerja(proyekId?: string | null) {
-  revalidatePath("/admin/kerja");
-  revalidatePath("/admin/kerja/jadwal");
-  if (proyekId) revalidatePath(`/admin/kerja/proyek/${proyekId}`);
+  revalidatePath("/ultraproduktif");
+  revalidatePath("/ultraproduktif/jadwal");
+  if (proyekId) revalidatePath(`/ultraproduktif/proyek/${proyekId}`);
 }
 
 // --- Sinkron Calendar ------------------------------------------------------------
@@ -131,8 +131,8 @@ export async function buatProyek(_prev: FormState, formData: FormData): Promise<
 
   // redirect() harus di luar try/catch — ia bekerja dengan cara "melempar"
   // sinyal navigasi, dan catch di atas akan salah menangkapnya sebagai galat.
-  revalidatePath("/admin/kerja");
-  redirect(`/admin/kerja/proyek/${proyekId}`);
+  revalidatePath("/ultraproduktif");
+  redirect(`/ultraproduktif/proyek/${proyekId}`);
 }
 
 export async function perbaruiProyek(

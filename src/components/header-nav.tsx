@@ -17,7 +17,7 @@ const TAUTAN = [
 ];
 
 /** Tautan tambahan yang cuma tampil buat pemilik situs yang sedang masuk. */
-const TAUTAN_ADMIN = [{ href: "/admin/kerja", label: "Kerja" }];
+const TAUTAN_ADMIN = [{ href: "/ultraproduktif", label: "Ultraproduktif" }];
 
 export function HeaderNav({
   nama,

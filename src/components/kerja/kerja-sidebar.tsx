@@ -17,14 +17,14 @@ export function KerjaSidebar({ proyek }: { proyek: WorkProject[] }) {
   const aktif = proyek.filter((p) => p.status !== "arsip");
 
   return (
-    <nav aria-label="Navigasi area Kerja" className="flex flex-col gap-6">
+    <nav aria-label="Navigasi Ultraproduktif" className="flex flex-col gap-6">
       <ul className="flex flex-col gap-0.5">
         <li>
           <Link
-            href="/admin/kerja"
+            href="/ultraproduktif"
             className={cn(
               "flex min-h-[40px] items-center gap-2.5 rounded px-3 text-sm transition-colors duration-200",
-              pathname === "/admin/kerja" ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              pathname === "/ultraproduktif" ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             <Gauge className="size-4 shrink-0" aria-hidden />
@@ -33,10 +33,10 @@ export function KerjaSidebar({ proyek }: { proyek: WorkProject[] }) {
         </li>
         <li>
           <Link
-            href="/admin/kerja/jadwal"
+            href="/ultraproduktif/jadwal"
             className={cn(
               "flex min-h-[40px] items-center gap-2.5 rounded px-3 text-sm transition-colors duration-200",
-              pathname === "/admin/kerja/jadwal" ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              pathname === "/ultraproduktif/jadwal" ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             <CalendarClock className="size-4 shrink-0" aria-hidden />
@@ -48,7 +48,7 @@ export function KerjaSidebar({ proyek }: { proyek: WorkProject[] }) {
       <div>
         <div className="flex items-center justify-between px-3">
           <p className="eyebrow">Proyek</p>
-          <Link href="/admin/kerja/proyek/baru" className="text-muted-foreground hover:text-foreground" aria-label="Proyek baru">
+          <Link href="/ultraproduktif/proyek/baru" className="text-muted-foreground hover:text-foreground" aria-label="Proyek baru">
             <Plus className="size-4" aria-hidden />
           </Link>
         </div>
@@ -57,7 +57,7 @@ export function KerjaSidebar({ proyek }: { proyek: WorkProject[] }) {
             <li className="px-3 text-xs text-subtle">Belum ada proyek.</li>
           ) : (
             aktif.map((p) => {
-              const href = `/admin/kerja/proyek/${p.id}`;
+              const href = `/ultraproduktif/proyek/${p.id}`;
               const isAktif = pathname === href;
               return (
                 <li key={p.id}>

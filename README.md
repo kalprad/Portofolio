@@ -1,14 +1,15 @@
 # Website pribadi — Rizki Haikal
 
-Portofolio, tulisan, arsip kuliah, dan area Kerja pribadi (arsip proyek ala
-Notion). Satu sistem, tiga lapis akses, semuanya disunting lewat panel admin
-tanpa menyentuh kode.
+Portofolio, tulisan, arsip kuliah, dan Ultraproduktif (arsip proyek pribadi
+ala Notion). Satu sistem, tiga lapis akses, semuanya disunting lewat panel
+admin (atau, khusus Ultraproduktif, langsung dari situsnya) tanpa menyentuh
+kode.
 
 | Lapis | Isi | Gerbang |
 |---|---|---|
 | Publik | Profil, CV, portofolio, tulisan | — |
 | Semi-publik | Arsip kuliah S1 & S2 | Login Google berdomain UGM |
-| Privat | Panel admin, termasuk area Kerja (proyek/tugas/catatan/jadwal) | Login Google alamat pemilik |
+| Privat | Panel admin, dan Ultraproduktif (`/ultraproduktif`) | Login Google alamat pemilik |
 
 **Stack.** Next.js 15 (App Router) · TypeScript · Tailwind CSS v4 ·
 Auth.js v5 · Vercel.
@@ -215,7 +216,8 @@ mengunduh apa.
 | `/admin/tulisan` | Tulisan dengan tiga tingkat privasi |
 | `/admin/arsip` | Mata kuliah dan berkasnya |
 | `/admin/log` | Jejak siapa mengunduh apa |
-| `/admin/kerja` | Area Kerja — proyek, papan tugas, catatan, jadwal (lihat §10) |
+
+**Ultraproduktif bukan bagian dari panel admin** — ia hidup di `/ultraproduktif`, dibungkus tampilan situs publik seperti biasa (bukan tampilan panel admin), dan cuma muncul di menu header kalau yang sedang login adalah pemilik situs. Lihat §10.
 
 ### Tiga tingkat privasi tulisan
 
@@ -257,12 +259,12 @@ src/
 │   │   ├── page.tsx              beranda
 │   │   ├── tentang/ cv/          profil & CV
 │   │   ├── portofolio/           daftar + detail
-│   │   ├── tulisan/              daftar + detail
+│   │   ├── tulisan/               daftar + detail
 │   │   ├── arsip/                daftar + detail (bergerbang)
-│   │   └── masuk/                halaman login
+│   │   ├── masuk/                halaman login
+│   │   └── ultraproduktif/       Ultraproduktif (§10) — dijaga middleware, bukan halaman admin
 │   ├── admin/            # Panel admin — layout & penjaga sendiri
-│   │   ├── actions.ts             menulis balik ke content/
-│   │   └── kerja/                 area Kerja (§10) — proyek, papan tugas, jadwal
+│   │   └── actions.ts             menulis balik ke content/
 │   ├── api/
 │   │   ├── auth/                  Auth.js
 │   │   ├── arsip/[itemId]/unduh/  satu-satunya jalan ke berkas
@@ -310,12 +312,15 @@ header.
 
 ---
 
-## 10. Area Kerja (fase 2)
+## 10. Ultraproduktif (fase 2)
 
-`/admin/kerja` adalah arsip proyek pribadi ala Notion: proyek, papan tugas
+`/ultraproduktif` adalah arsip proyek pribadi ala Notion: proyek, papan tugas
 (Kanban), catatan/materi per proyek, dan jadwal — semuanya dua arah dengan
-Google Calendar. Sampai langkah setup di bawah selesai, halamannya tetap bisa
-dibuka dan cuma menampilkan petunjuk setup — tidak error.
+Google Calendar. Beda dari `/admin/*`, halaman ini dibungkus tampilan situs
+publik biasa (header & footer situs, bukan tampilan panel admin) — tautannya
+muncul di header, di sebelah CV, tapi cuma kalau yang login adalah pemilik
+situs. Sampai langkah setup di bawah selesai, halamannya tetap bisa dibuka
+dan cuma menampilkan petunjuk setup — tidak error.
 
 **Kenapa datanya bukan di `content/` seperti konten lain.** Tugas dicentang,
 kartu digeser, catatan direvisi — semua bisa berkali-kali dalam satu hari.
@@ -377,7 +382,7 @@ sekali sehari — jadwal yang lebih sering dari itu bikin deployment langsung
 gagal (bukan cuma dibatasi, tapi ditolak total). Karena itu `vercel.json` di
 sini disetel `0 23 * * *` (jam 23:00 UTC = 06:00 WIB, sekali sehari). Kalau
 butuh sinkron lebih cepat dari itu, pakai tombol **"Sinkron Calendar
-sekarang"** di `/admin/kerja` buat memicu manual selagi masuk sebagai admin,
+sekarang"** di `/ultraproduktif` buat memicu manual selagi masuk sebagai admin,
 atau naik ke paket Pro (cron per-menit) kalau sinkron real-time penting.
 
 Opsional: isi `CRON_SECRET` dengan teks acak supaya endpoint sinkron tidak

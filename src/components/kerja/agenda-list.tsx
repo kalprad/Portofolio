@@ -48,7 +48,7 @@ export function AgendaList({ entri }: { entri: AgendaEntry[] }) {
                   )}
                   <div className="min-w-0">
                     {e.proyekId && e.kind === "tugas" ? (
-                      <Link href={`/admin/kerja/proyek/${e.proyekId}`} className="truncate text-sm font-medium hover:text-accent">
+                      <Link href={`/ultraproduktif/proyek/${e.proyekId}`} className="truncate text-sm font-medium hover:text-accent">
                         {e.judul}
                       </Link>
                     ) : (

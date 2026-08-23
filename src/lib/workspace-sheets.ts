@@ -27,7 +27,7 @@ export { workspaceSheetsConfigured, workspaceSheetUrl };
 /**
  * CRUD area Kerja di atas Google Sheets — satu tab per jenis data. Header
  * baris pertama tiap tab HARUS persis seperti daftar `*_KOLOM` di bawah; itu
- * yang ditampilkan sebagai petunjuk setup di /admin/kerja saat spreadsheet
+ * yang ditampilkan sebagai petunjuk setup di /ultraproduktif saat spreadsheet
  * belum disiapkan.
  */
 

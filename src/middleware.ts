@@ -8,10 +8,12 @@ import { auth } from "@/lib/auth";
  * tidak berhak. Penjaga sebenarnya ada di setiap server action lewat
  * `requireAdmin()` — middleware saja tidak pernah cukup.
  */
+const RUTE_TERJAGA = ["/admin", "/ultraproduktif"];
+
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
-  if (pathname.startsWith("/admin") && !req.auth?.user?.isAdmin) {
+  if (RUTE_TERJAGA.some((r) => pathname.startsWith(r)) && !req.auth?.user?.isAdmin) {
     const url = new URL("/masuk", req.nextUrl.origin);
     url.searchParams.set("tujuan", pathname);
     url.searchParams.set("galat", req.auth?.user ? "bukan-admin" : "perlu-masuk");
@@ -22,5 +24,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/ultraproduktif/:path*"],
 };

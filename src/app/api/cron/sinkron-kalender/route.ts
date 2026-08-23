@@ -19,7 +19,7 @@ import { dariISOkeWIB, keRFC3339, tambahMenit } from "@/lib/workspace-utils";
  * dibuat langsung di Calendar (misal dari HP) — lewat pengecekan berkala.
  *
  * Dipanggil oleh Vercel Cron (lihat `vercel.json`), dan boleh juga dipicu
- * manual selagi masuk sebagai admin (tombol "Sinkron sekarang" di /admin/kerja).
+ * manual selagi masuk sebagai admin (tombol "Sinkron sekarang" di /ultraproduktif).
  *
  * Aturan tabrakan: setiap acara yang situs buat dititipi cap waktu
  * `calendar_diubah_pada` dari respons Calendar. Kalau saat sinkron masuk cap
@@ -200,14 +200,14 @@ export async function GET(req: Request) {
   if (!calendarConfigured() || !ws.workspaceSheetsConfigured()) {
     return NextResponse.json({
       ok: true,
-      message: "Google Calendar atau Sheets area Kerja belum disetel — tidak ada yang disinkron.",
+      message: "Google Calendar atau Sheets Ultraproduktif belum disetel — tidak ada yang disinkron.",
     });
   }
 
   try {
     const ringkasan = await sinkronMasuk();
-    revalidatePath("/admin/kerja");
-    revalidatePath("/admin/kerja/jadwal");
+    revalidatePath("/ultraproduktif");
+    revalidatePath("/ultraproduktif/jadwal");
     return NextResponse.json({ ok: true, ...ringkasan });
   } catch (err) {
     console.error("[kerja] sinkron masuk gagal:", err);

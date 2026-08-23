@@ -6,7 +6,6 @@ import {
   BookOpen,
   FileText,
   FolderArchive,
-  FolderKanban,
   Gauge,
   ScrollText,
   ShieldCheck,
@@ -16,7 +15,6 @@ import { cn } from "@/lib/utils";
 
 const MENU = [
   { href: "/admin", label: "Ringkasan", icon: Gauge, exact: true },
-  { href: "/admin/kerja", label: "Kerja", icon: FolderKanban },
   { href: "/admin/profil", label: "Profil & CV diri", icon: User },
   { href: "/admin/cv", label: "Entri CV", icon: ScrollText },
   { href: "/admin/portofolio", label: "Portofolio", icon: BookOpen },

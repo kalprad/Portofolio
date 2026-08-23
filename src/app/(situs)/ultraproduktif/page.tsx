@@ -19,11 +19,11 @@ export default async function KerjaRingkasanPage() {
   if (!sheetsSiap) {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="display-lg">Kerja</h1>
+        <h1 className="display-lg">Ultraproduktif</h1>
         <EmptyState
           title="Belum disetel"
           description={
-            'Area Kerja butuh spreadsheet Google Sheets sendiri sebagai penyimpan data (proyek, tugas, catatan, jadwal berubah terlalu sering untuk disimpan sebagai commit git). Buat satu spreadsheet baru, bagikan ke alamat service account yang sama dipakai Drive/Sheets sebagai Editor, lalu isi GOOGLE_SHEETS_KERJA_ID di environment variable.'
+            'Ultraproduktif butuh spreadsheet Google Sheets sendiri sebagai penyimpan data (proyek, tugas, catatan, jadwal berubah terlalu sering untuk disimpan sebagai commit git). Buat satu spreadsheet baru, bagikan ke alamat service account yang sama dipakai Drive/Sheets sebagai Editor, lalu isi GOOGLE_SHEETS_KERJA_ID di environment variable.'
           }
         />
       </div>
@@ -45,12 +45,12 @@ export default async function KerjaRingkasanPage() {
     <div className="flex flex-col gap-10">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="display-lg">Kerja</h1>
+          <h1 className="display-lg">Ultraproduktif</h1>
           <p className="mt-2 max-w-xl text-muted-foreground">
             Arsip proyek pribadi — tugas, catatan, dan jadwal jadi satu, dua arah dengan Google Calendar.
           </p>
         </div>
-        <ButtonLink href="/admin/kerja/proyek/baru">
+        <ButtonLink href="/ultraproduktif/proyek/baru">
           <Plus className="size-4" aria-hidden />
           Proyek baru
         </ButtonLink>
@@ -63,7 +63,7 @@ export default async function KerjaRingkasanPage() {
         ) : (
           <div className="grid gap-px overflow-hidden rounded border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
             {proyek.map((p) => (
-              <Link key={p.id} href={`/admin/kerja/proyek/${p.id}`} className="group bg-background p-5 transition-colors duration-200 hover:bg-muted">
+              <Link key={p.id} href={`/ultraproduktif/proyek/${p.id}`} className="group bg-background p-5 transition-colors duration-200 hover:bg-muted">
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate font-medium">{p.judul}</p>
                   <Badge tone={TONE[p.status]}>{PROJECT_STATUS_LABEL[p.status]}</Badge>
@@ -78,7 +78,7 @@ export default async function KerjaRingkasanPage() {
       <section>
         <div className="flex items-baseline justify-between gap-4">
           <h2 className="eyebrow">Agenda terdekat</h2>
-          <Link href="/admin/kerja/jadwal" className="link-underline text-sm">Semua jadwal</Link>
+          <Link href="/ultraproduktif/jadwal" className="link-underline text-sm">Semua jadwal</Link>
         </div>
         <div className="mt-4">
           <AgendaList entri={agenda} />
@@ -94,7 +94,7 @@ export default async function KerjaRingkasanPage() {
             </span>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="font-medium">Penyimpanan data Kerja</p>
+                <p className="font-medium">Penyimpanan data Ultraproduktif</p>
                 <Badge tone="success">Google Sheets</Badge>
               </div>
               <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
