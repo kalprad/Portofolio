@@ -1,0 +1,46 @@
+{
+  "title_id": "Dinamika Struktur",
+  "title_en": null,
+  "description_id": "Materi dinamika struktur: sistem satu derajat kebebasan hingga analisis riwayat waktu.",
+  "description_en": null,
+  "level": "s2",
+  "semester": 1,
+  "course_code": "TKS6104",
+  "credits": 3,
+  "lecturer": null,
+  "cover_image_url": null,
+  "sort_order": 3,
+  "is_published": true,
+  "items": [
+    {
+      "id": "rangkuman-sdof-mdof",
+      "title_id": "Rangkuman SDOF & MDOF",
+      "title_en": null,
+      "description_id": "Ringkasan padat sistem satu dan banyak derajat kebebasan.",
+      "kind": "catatan",
+      "drive_file_id": null,
+      "drive_folder_id": null,
+      "external_url": null,
+      "file_size_bytes": 5100000,
+      "mime_type": "application/pdf",
+      "access_level": "ugm",
+      "sort_order": 1,
+      "is_published": true
+    },
+    {
+      "id": "skrip-newmark",
+      "title_id": "Skrip Python Analisis Riwayat Waktu",
+      "title_en": null,
+      "description_id": "Implementasi integrasi Newmark-beta untuk latihan mandiri.",
+      "kind": "kode",
+      "drive_file_id": null,
+      "drive_folder_id": null,
+      "external_url": null,
+      "file_size_bytes": 340000,
+      "mime_type": "application/zip",
+      "access_level": "ugm",
+      "sort_order": 2,
+      "is_published": true
+    }
+  ]
+}

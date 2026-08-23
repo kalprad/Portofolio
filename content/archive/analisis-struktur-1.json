@@ -1,0 +1,61 @@
+{
+  "title_id": "Analisis Struktur I",
+  "title_en": null,
+  "description_id": "Catatan kuliah, slide, dan kumpulan soal untuk analisis struktur statis tertentu dan tak tentu.",
+  "description_en": null,
+  "level": "s1",
+  "semester": 3,
+  "course_code": "TKS2101",
+  "credits": 3,
+  "lecturer": null,
+  "cover_image_url": null,
+  "sort_order": 1,
+  "is_published": true,
+  "items": [
+    {
+      "id": "slide-lengkap",
+      "title_id": "Slide Kuliah Lengkap (Pertemuan 1-14)",
+      "title_en": null,
+      "description_id": "Gabungan slide seluruh pertemuan dalam satu berkas PDF.",
+      "kind": "slide",
+      "drive_file_id": null,
+      "drive_folder_id": null,
+      "external_url": null,
+      "file_size_bytes": 24600000,
+      "mime_type": "application/pdf",
+      "access_level": "ugm",
+      "sort_order": 1,
+      "is_published": true
+    },
+    {
+      "id": "catatan-tangan",
+      "title_id": "Catatan Tulis Tangan",
+      "title_en": null,
+      "description_id": "Catatan pribadi selama kuliah, sudah dipindai.",
+      "kind": "catatan",
+      "drive_file_id": null,
+      "drive_folder_id": null,
+      "external_url": null,
+      "file_size_bytes": 11200000,
+      "mime_type": "application/pdf",
+      "access_level": "ugm",
+      "sort_order": 2,
+      "is_published": true
+    },
+    {
+      "id": "bank-soal",
+      "title_id": "Kumpulan Soal UTS & UAS",
+      "title_en": null,
+      "description_id": "Arsip soal beberapa tahun beserta pembahasan sebagian.",
+      "kind": "soal",
+      "drive_file_id": null,
+      "drive_folder_id": null,
+      "external_url": null,
+      "file_size_bytes": 8400000,
+      "mime_type": "application/pdf",
+      "access_level": "ugm",
+      "sort_order": 3,
+      "is_published": true
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "title_id": "Rekayasa Gempa",
+  "title_en": null,
+  "description_id": "Slide kuliah, rekaman gempa untuk latihan, dan catatan penerapan SNI 1726.",
+  "description_en": null,
+  "level": "s2",
+  "semester": 2,
+  "course_code": "TKS6205",
+  "credits": 3,
+  "lecturer": null,
+  "cover_image_url": null,
+  "sort_order": 4,
+  "is_published": true,
+  "items": [
+    {
+      "id": "slide-gempa",
+      "title_id": "Slide Kuliah Rekayasa Gempa",
+      "title_en": null,
+      "description_id": "Slide seluruh pertemuan.",
+      "kind": "slide",
+      "drive_file_id": null,
+      "drive_folder_id": null,
+      "external_url": null,
+      "file_size_bytes": 31500000,
+      "mime_type": "application/pdf",
+      "access_level": "ugm",
+      "sort_order": 1,
+      "is_published": true
+    },
+    {
+      "id": "rekaman-gempa",
+      "title_id": "Rekaman Gempa untuk Latihan",
+      "title_en": null,
+      "description_id": "Kumpulan rekaman percepatan tanah dalam format teks.",
+      "kind": "lainnya",
+      "drive_file_id": null,
+      "drive_folder_id": null,
+      "external_url": null,
+      "file_size_bytes": 2900000,
+      "mime_type": "application/zip",
+      "access_level": "ugm",
+      "sort_order": 2,
+      "is_published": true
+    }
+  ]
+}

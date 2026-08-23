@@ -1,0 +1,31 @@
+{
+  "title_id": "Mekanika Bahan",
+  "title_en": null,
+  "description_id": "Materi kuliah beserta modul praktikum dan contoh pengerjaan laporan.",
+  "description_en": null,
+  "level": "s1",
+  "semester": 2,
+  "course_code": "TKS1203",
+  "credits": 3,
+  "lecturer": null,
+  "cover_image_url": null,
+  "sort_order": 2,
+  "is_published": true,
+  "items": [
+    {
+      "id": "modul-praktikum",
+      "title_id": "Modul Praktikum",
+      "title_en": null,
+      "description_id": "Modul praktikum yang saya susun ulang, termasuk lembar kerja.",
+      "kind": "buku",
+      "drive_file_id": null,
+      "drive_folder_id": null,
+      "external_url": null,
+      "file_size_bytes": 15800000,
+      "mime_type": "application/pdf",
+      "access_level": "ugm",
+      "sort_order": 1,
+      "is_published": true
+    }
+  ]
+}
