@@ -49,20 +49,20 @@
       "is_published": true
     },
     {
+      "id": "cv-kji",
       "section": "penghargaan",
       "title_id": "Juara 2 Kompetisi Jembatan Indonesia 2025 Kategori Pelengkung",
+      "title_en": null,
       "organization": "Kementerian Pendidikan",
       "location": "Indonesia",
-      "description_id": null,
-      "title_en": null,
-      "description_en": null,
       "start_date": "2025-10-01",
       "end_date": null,
       "is_current": false,
+      "description_id": null,
+      "description_en": null,
       "url": null,
       "sort_order": 1,
-      "is_published": true,
-      "id": "cv-kji"
+      "is_published": true
     },
     {
       "id": "cv-skill-struktur",
@@ -159,6 +159,22 @@
       "url": null,
       "sort_order": 3,
       "is_published": true
+    },
+    {
+      "section": "pendidikan",
+      "title_id": "Siswa",
+      "organization": "SMA Pradita Dirgantara",
+      "location": "Boyolali, Indonesia",
+      "description_id": null,
+      "title_en": null,
+      "description_en": null,
+      "start_date": "2020-07-01",
+      "end_date": "2023-07-01",
+      "is_current": false,
+      "url": null,
+      "sort_order": 0,
+      "is_published": true,
+      "id": "cv-siswa-mt5rgybd"
     }
   ]
 }
