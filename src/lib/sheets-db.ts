@@ -82,11 +82,19 @@ export interface BarisMentah {
 export async function bacaTabel(tab: string, kolom: string[]): Promise<BarisMentah[]> {
   if (!workspaceSheetsConfigured()) return [];
 
-  const res = await panggil(`/values/${encodeURIComponent(rentangBaca(tab, kolom))}`);
-  const data = (await res.json()) as { values?: string[][] };
-  const rows = data.values ?? [];
+  try {
+    const res = await panggil(`/values/${encodeURIComponent(rentangBaca(tab, kolom))}`);
+    const data = (await res.json()) as { values?: string[][] };
+    const rows = data.values ?? [];
 
-  return rows.map((nilai, i) => ({ baris: i + 2, nilai }));
+    return rows.map((nilai, i) => ({ baris: i + 2, nilai }));
+  } catch (err) {
+    // Kegagalan baca (kredensial salah, API lambat, dll) tidak boleh
+    // merobohkan seluruh halaman — apalagi proses build situs. Yang tampil
+    // ke pengguna cukup daftar kosong; galatnya tetap tercatat di log server.
+    console.error(`[kerja] gagal membaca tab "${tab}":`, err);
+    return [];
+  }
 }
 
 /** Tambah satu baris baru di akhir tab. */

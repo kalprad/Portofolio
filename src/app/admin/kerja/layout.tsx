@@ -6,6 +6,14 @@ export const metadata: Metadata = {
   title: { default: "Kerja", template: "%s · Kerja · Panel Admin" },
 };
 
+// Halaman ini bergantung pada Google Sheets/Calendar yang bisa gagal (kunci
+// belum benar, API lagi lambat, dsb). Tanpa `force-dynamic`, Next.js mencoba
+// merender halaman ini SEKALI saat build — kalau gagal saat itu, seluruh
+// proses build ikut gagal dan situs publik pun tidak ter-deploy. Dengan ini,
+// halamannya dirender ulang tiap permintaan, jadi kegagalan di sini cuma
+// memengaruhi halaman ini sendiri, bukan seluruh situs.
+export const dynamic = "force-dynamic";
+
 export default async function KerjaLayout({ children }: { children: React.ReactNode }) {
   const proyek = workspaceSheetsConfigured() ? await listProjects() : [];
 
