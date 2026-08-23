@@ -1,20 +1,20 @@
 {
   "entries": [
     {
+      "id": "cv-magister",
       "section": "pendidikan",
       "title_id": "Magister Teknik Sipil - Teknik Struktur",
+      "title_en": null,
       "organization": "Universitas Gadjah Mada",
       "location": "Yogyakarta",
-      "description_id": "Fokus riset: dinamika struktur dan sistem peredam getaran. Tesis mengenai efektivitas damper pada struktur slab on pile.",
-      "title_en": null,
-      "description_en": null,
       "start_date": "2026-08-01",
       "end_date": null,
       "is_current": true,
+      "description_id": "Fokus riset: dinamika struktur dan sistem peredam getaran. Tesis mengenai efektivitas damper pada struktur slab on pile.",
+      "description_en": null,
       "url": null,
       "sort_order": 1,
-      "is_published": true,
-      "id": "cv-magister"
+      "is_published": true
     },
     {
       "id": "cv-asisten-peneliti",
@@ -49,20 +49,20 @@
       "is_published": true
     },
     {
-      "id": "cv-kji",
       "section": "penghargaan",
-      "title_id": "Finalis Kompetisi Jembatan Indonesia",
-      "title_en": null,
+      "title_id": "Juara 2 Kompetisi Jembatan Indonesia 2025 Kategori Pelengkung",
       "organization": "Kementerian Pendidikan",
       "location": "Indonesia",
-      "start_date": "2022-10-01",
+      "description_id": null,
+      "title_en": null,
+      "description_en": null,
+      "start_date": "2025-10-01",
       "end_date": null,
       "is_current": false,
-      "description_id": "Tim perancang dan pelaksana purwarupa jembatan rangka baja.",
-      "description_en": null,
       "url": null,
       "sort_order": 1,
-      "is_published": true
+      "is_published": true,
+      "id": "cv-kji"
     },
     {
       "id": "cv-skill-struktur",
