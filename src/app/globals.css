@@ -226,6 +226,36 @@
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: none; }
   }
+
+  /* Dipakai <ScrollReveal>: elemen tersembunyi sampai masuk area pandang,
+     lalu muncul sekali dan tidak terulang saat di-scroll bolak-balik. */
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+  }
+  .scroll-reveal.masuk {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Teks gradien untuk hero beranda. Memakai warna aksen situs sendiri
+     (bukan warna baru) supaya tetap selaras dengan tombol dan tautan lain. */
+  .text-gradient-accent {
+    background-image: linear-gradient(135deg, var(--accent), var(--foreground));
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  /* Cincin cahaya lembut di belakang foto hero. */
+  .hero-photo-glow::before {
+    content: "";
+    position: absolute;
+    inset: -18%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 35%, transparent), transparent 70%);
+    z-index: -1;
+  }
 }
 
 /* ==========================================================================

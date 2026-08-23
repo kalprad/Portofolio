@@ -1,28 +1,37 @@
 {
-  "full_name": "Rizki Haikal",
+  "full_name": "Rizki Haikal Pradana",
   "headline_id": "Structural Engineer & Researcher",
-  "headline_en": null,
   "tagline_id": "Meneliti efektivitas damper pada struktur slab on pile.",
+  "bio_id": "Mahasiswa pascasarjana Teknik Sipil Universitas Gadjah Mada dengan fokus pada rekayasa struktur dan dinamika bangunan. Saat ini meneliti efektivitas damper pada struktur slab on pile, dengan hasil yang dipresentasikan pada konferensi ilmiah di Australia, Desember 2026.\r\n\r\nDi luar riset, saya menulis catatan teknik dan hal-hal personal di halaman Tulisan, serta merapikan arsip materi kuliah S1 dan S2 supaya bisa dipakai ulang oleh teman-teman seangkatan dan adik tingkat.",
+  "headline_en": null,
   "tagline_en": null,
-  "bio_id": "Mahasiswa pascasarjana Teknik Sipil Universitas Gadjah Mada dengan fokus pada rekayasa struktur dan dinamika bangunan. Saat ini meneliti efektivitas damper pada struktur slab on pile, dengan hasil yang dipresentasikan pada konferensi ilmiah di Australia, Desember 2026.\n\nDi luar riset, saya menulis catatan teknik dan hal-hal personal di halaman Tulisan, serta merapikan arsip materi kuliah S1 dan S2 supaya bisa dipakai ulang oleh teman-teman seangkatan dan adik tingkat.",
   "bio_en": null,
   "location": "Yogyakarta, Indonesia",
   "email": "rizkihaikal@gmail.com",
   "phone": null,
-  "avatar_url": "/foto/potret-1.webp",
-  "cv_file_url": "/cv-rizki-haikal.pdf",
+  "avatar_url": "https://drive.google.com/file/d/1nvLUcFu8ttm56QhnEbX4IZBOQP8f_hS4/view?usp=sharing",
+  "cv_file_url": "https://drive.google.com/file/d/1DC2XTvNG6Px1ZhSGWh75g1VB0hv3qWt_/view?usp=sharing",
   "social_links": [
-    {
-      "label": "GitHub",
-      "url": "https://github.com/"
-    },
     {
       "label": "LinkedIn",
       "url": "https://linkedin.com/in/"
     },
     {
+      "label": "Instagram",
+      "url": "https://instagram.com/"
+    },
+    {
+      "label": "ResearchGate",
+      "url": "https://researchgate.net/profile/"
+    },
+    {
       "label": "Google Scholar",
       "url": "https://scholar.google.com/"
+    },
+    {
+      "label": "YouTube",
+      "url": "https://youtube.com/@"
     }
-  ]
+  ],
+  "hero_photo_url": "/foto/potret-2.webp"
 }

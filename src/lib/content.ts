@@ -98,11 +98,11 @@ function uraikanMarkdown(dirRelatif: string, slug: string): Terurai | null {
 
 // --- Pembantu konversi -------------------------------------------------------
 
-function teks(v: unknown): string | null {
+export function teks(v: unknown): string | null {
   return typeof v === "string" && v.trim() !== "" ? v : null;
 }
 
-function angka(v: unknown): number | null {
+export function angka(v: unknown): number | null {
   if (typeof v === "number" && Number.isFinite(v)) return v;
   if (typeof v === "string" && v.trim() !== "") {
     const n = Number(v);
@@ -111,11 +111,11 @@ function angka(v: unknown): number | null {
   return null;
 }
 
-function bool(v: unknown, bawaan = false): boolean {
+export function bool(v: unknown, bawaan = false): boolean {
   return typeof v === "boolean" ? v : bawaan;
 }
 
-function daftarTeks(v: unknown): string[] {
+export function daftarTeks(v: unknown): string[] {
   if (Array.isArray(v)) return v.map(String).filter(Boolean);
   if (typeof v === "string" && v.trim() !== "") {
     return v.split(",").map((s) => s.trim()).filter(Boolean);
@@ -151,6 +151,7 @@ export const readProfile = cache((): Profile | null => {
     email: teks(raw.email),
     phone: teks(raw.phone),
     avatar_url: teks(raw.avatar_url),
+    hero_photo_url: teks(raw.hero_photo_url),
     cv_file_url: teks(raw.cv_file_url),
     social_links: Array.isArray(raw.social_links)
       ? (raw.social_links as Profile["social_links"])

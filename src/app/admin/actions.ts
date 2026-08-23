@@ -12,16 +12,14 @@ import {
   keMarkdown,
   simpanBerkas,
 } from "@/lib/content-write";
+import { ITEM_ID_SEPARATOR, PATHS, pisahItemId } from "@/lib/content";
 import {
-  ITEM_ID_SEPARATOR,
-  PATHS,
-  pisahItemId,
-  readArchiveCollections,
-  readCvEntries,
-  readPosts,
-  readProfile,
-  readProjects,
-} from "@/lib/content";
+  currentArchiveCollections,
+  currentCvEntries,
+  currentPosts,
+  currentProfile,
+  currentProjects,
+} from "@/lib/content-live";
 import { slugify, readingMinutes } from "@/lib/utils";
 import type { FormState } from "@/lib/form-state";
 
@@ -103,8 +101,12 @@ function validasi(resource: ResourceDef, nilai: Record<string, unknown>) {
     }
     if (f.type === "url") {
       const v = nilai[f.name];
-      if (typeof v === "string" && v !== "" && !/^https?:\/\/\S+$/i.test(v)) {
-        errors[f.name] = "Harus berupa URL lengkap yang diawali http:// atau https://.";
+      // Selain URL lengkap, path situs sendiri juga sah — foto dan CV yang
+      // ditaruh di folder public/ dirujuk sebagai "/foto/nama.webp", bukan
+      // alamat penuh berdomain.
+      if (typeof v === "string" && v !== "" && !/^(https?:\/\/\S+|\/\S*)$/i.test(v)) {
+        errors[f.name] =
+          "Harus URL lengkap (https://...) atau path di situs sendiri (diawali /).";
       }
     }
   }
@@ -129,7 +131,7 @@ function bereskanSlug(
 async function simpanProyek(nilai: Record<string, unknown>, id: string | null) {
   const slug = bereskanSlug(nilai, "title_id");
 
-  if (readProjects().some((p) => p.slug === slug && p.slug !== id)) {
+  if ((await currentProjects()).some((p) => p.slug === slug && p.slug !== id)) {
     return { errors: { slug: "Slug ini sudah dipakai proyek lain." } };
   }
 
@@ -162,7 +164,7 @@ async function simpanProyek(nilai: Record<string, unknown>, id: string | null) {
 async function simpanTulisan(nilai: Record<string, unknown>, id: string | null) {
   const slug = bereskanSlug(nilai, "title_id");
 
-  if (readPosts().some((p) => p.slug === slug && p.slug !== id)) {
+  if ((await currentPosts()).some((p) => p.slug === slug && p.slug !== id)) {
     return { errors: { slug: "Slug ini sudah dipakai tulisan lain." } };
   }
 
@@ -199,7 +201,7 @@ async function simpanTulisan(nilai: Record<string, unknown>, id: string | null) 
 }
 
 async function simpanEntriCv(nilai: Record<string, unknown>, id: string | null) {
-  const entries = readCvEntries().map((e) => ({ ...e })) as Record<string, unknown>[];
+  const entries = (await currentCvEntries()).map((e) => ({ ...e })) as Record<string, unknown>[];
   const entriId = id ?? `cv-${slugify(String(nilai.title_id ?? ""))}-${Date.now().toString(36)}`;
 
   const baru = { ...nilai, id: entriId };
@@ -222,7 +224,7 @@ async function simpanEntriCv(nilai: Record<string, unknown>, id: string | null) 
 
 async function simpanMataKuliah(nilai: Record<string, unknown>, id: string | null) {
   const slug = bereskanSlug(nilai, "title_id");
-  const semua = readArchiveCollections();
+  const semua = await currentArchiveCollections();
 
   if (semua.some((k) => k.slug === slug && k.slug !== id)) {
     return { errors: { slug: "Slug ini sudah dipakai mata kuliah lain." } };
@@ -276,7 +278,7 @@ function bersihkanButir(masukan: object): Record<string, unknown> {
 
 async function simpanButirArsip(nilai: Record<string, unknown>, id: string | null) {
   const tujuanSlug = String(nilai.collection_id ?? "");
-  const semua = readArchiveCollections();
+  const semua = await currentArchiveCollections();
   const tujuan = semua.find((k) => k.slug === tujuanSlug);
 
   if (!tujuan) {
@@ -358,7 +360,7 @@ function tanpaItems(
 }
 
 async function simpanProfil(nilai: Record<string, unknown>) {
-  const lama = readProfile();
+  const lama = await currentProfile();
 
   await simpanBerkas(
     PATHS.profile,
@@ -442,7 +444,7 @@ export async function hapusEntitas(resourceKey: string, id: string) {
       break;
 
     case "cv": {
-      const entries = readCvEntries()
+      const entries = (await currentCvEntries())
         .filter((e) => e.id !== id)
         .map(({ created_at: _c, ...e }) => e);
       await simpanBerkas(PATHS.cv, keJson({ entries }), `konten: hapus entri CV ${id}`);
@@ -452,7 +454,7 @@ export async function hapusEntitas(resourceKey: string, id: string) {
     case "berkas": {
       const pisah = pisahItemId(id);
       const koleksi = pisah
-        ? readArchiveCollections().find((k) => k.slug === pisah.slug)
+        ? (await currentArchiveCollections()).find((k) => k.slug === pisah.slug)
         : undefined;
       if (koleksi) {
         const sisa = koleksi.items.filter((b) => b.id !== id).map((b) => bersihkanButir(b));

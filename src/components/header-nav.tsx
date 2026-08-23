@@ -57,17 +57,17 @@ export function HeaderNav({
           </Link>
 
           <nav aria-label="Navigasi utama" className="hidden md:block">
-            <ul className="flex items-center gap-1">
+            <ul className="flex items-center gap-1 rounded-full border border-border bg-muted/60 p-1">
               {TAUTAN.map((t) => (
                 <li key={t.href}>
                   <Link
                     href={t.href}
                     aria-current={aktif(t.href) ? "page" : undefined}
                     className={cn(
-                      "inline-flex min-h-[40px] items-center rounded px-3 text-sm transition-colors duration-200",
+                      "inline-flex min-h-[36px] items-center rounded-full px-4 text-sm transition-colors duration-200",
                       aktif(t.href)
-                        ? "text-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                        ? "bg-foreground font-medium text-background"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   >
                     {t.label}

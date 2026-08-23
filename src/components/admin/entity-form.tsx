@@ -14,6 +14,7 @@ import {
   Textarea,
 } from "@/components/ui/primitives";
 import { simpanEntitas } from "@/app/admin/actions";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { fieldGroups, type FieldDef, type ResourceDef } from "@/lib/admin-schema";
 import { FORM_STATE_AWAL } from "@/lib/form-state";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,20 @@ function KolomIsian({
   const id = `f-${field.name}`;
   const awal = nilaiAwal(field, data);
   const opsi = opsiDinamis ?? field.options ?? [];
+
+  if (field.type === "image") {
+    return (
+      <Field
+        label={field.label}
+        htmlFor={id}
+        hint={field.hint}
+        error={error}
+        className="sm:col-span-2"
+      >
+        <ImageUploadField name={field.name} awal={awal} prefix={field.name} />
+      </Field>
+    );
+  }
 
   if (field.type === "checkbox") {
     return (

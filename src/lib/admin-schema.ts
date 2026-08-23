@@ -17,7 +17,8 @@ export type FieldType =
   | "checkbox"
   | "tags"
   | "url"
-  | "drive";
+  | "drive"
+  | "image";
 
 export interface FieldDef {
   name: string;
@@ -79,7 +80,7 @@ const projects: ResourceDef = {
     { name: "year_end", label: "Tahun selesai", type: "number", group: "Detail" },
     { name: "tags", label: "Kata kunci", type: "tags", hint: "Pisahkan dengan koma.", full: true, group: "Detail" },
 
-    { name: "cover_image_url", label: "URL gambar sampul", type: "url", full: true, group: "Media & terbit" },
+    { name: "cover_image_url", label: "Gambar sampul", type: "image", full: true, group: "Media & terbit" },
     { name: "external_url", label: "Tautan terkait", type: "url", full: true, group: "Media & terbit" },
     {
       name: "status", label: "Status", type: "select", required: true, group: "Media & terbit",
@@ -116,7 +117,7 @@ const posts: ResourceDef = {
 
     { name: "category", label: "Kategori", type: "text", placeholder: "Teknik / Curhat / Catatan", group: "Detail" },
     { name: "tags", label: "Kata kunci", type: "tags", hint: "Pisahkan dengan koma.", group: "Detail" },
-    { name: "cover_image_url", label: "URL gambar sampul", type: "url", full: true, group: "Detail" },
+    { name: "cover_image_url", label: "Gambar sampul", type: "image", full: true, group: "Detail" },
 
     {
       name: "visibility", label: "Tingkat privasi", type: "select", required: true, group: "Terbit",
@@ -284,8 +285,16 @@ const profile: ResourceDef = {
     { name: "location", label: "Lokasi", type: "text", group: "Kontak" },
     { name: "email", label: "Email", type: "text", group: "Kontak" },
     { name: "phone", label: "Telepon", type: "text", group: "Kontak" },
-    { name: "avatar_url", label: "URL foto", type: "url", full: true, group: "Kontak" },
     { name: "cv_file_url", label: "URL berkas CV (PDF)", type: "url", full: true, group: "Kontak" },
+
+    {
+      name: "avatar_url", label: "Foto formal", type: "image", full: true, group: "Foto",
+      hint: "Dipakai di halaman Tentang dan kepala CV.",
+    },
+    {
+      name: "hero_photo_url", label: "Foto santai", type: "image", full: true, group: "Foto",
+      hint: "Dipakai di beranda, di samping nama Anda.",
+    },
   ],
 };
 

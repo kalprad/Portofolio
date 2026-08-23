@@ -43,6 +43,8 @@ export interface Profile {
   email: string | null;
   phone: string | null;
   avatar_url: string | null;
+  /** Foto kasual untuk hero beranda — beda dari avatar_url yang dipakai di CV/Tentang. */
+  hero_photo_url: string | null;
   cv_file_url: string | null;
   social_links: SocialLink[];
   updated_at: string;

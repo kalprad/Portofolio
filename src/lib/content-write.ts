@@ -78,7 +78,7 @@ async function shaSaatIni(relatif: string): Promise<string | null> {
   return data.sha ?? null;
 }
 
-async function tulisGithub(relatif: string, isi: string, pesan: string): Promise<void> {
+async function tulisGithub(relatif: string, isi: string | Buffer, pesan: string): Promise<void> {
   if (!githubConfigured()) {
     throw new Error(
       "GitHub belum dikonfigurasi. Isi GITHUB_TOKEN, GITHUB_OWNER, dan GITHUB_REPO.",
@@ -86,13 +86,14 @@ async function tulisGithub(relatif: string, isi: string, pesan: string): Promise
   }
 
   const sha = await shaSaatIni(relatif);
+  const isiBase64 = Buffer.isBuffer(isi) ? isi.toString("base64") : Buffer.from(isi, "utf-8").toString("base64");
 
   const res = await fetch(repoUrl(relatif), {
     method: "PUT",
     headers: headers(),
     body: JSON.stringify({
       message: pesan,
-      content: Buffer.from(isi, "utf-8").toString("base64"),
+      content: isiBase64,
       branch: githubBranch(),
       ...(sha ? { sha } : {}),
     }),
@@ -126,10 +127,14 @@ async function hapusGithub(relatif: string, pesan: string): Promise<void> {
   }
 }
 
-async function tulisLokal(relatif: string, isi: string): Promise<void> {
+async function tulisLokal(relatif: string, isi: string | Buffer): Promise<void> {
   const absolut = path.join(process.cwd(), relatif);
   await fs.mkdir(path.dirname(absolut), { recursive: true });
-  await fs.writeFile(absolut, isi, "utf-8");
+  if (Buffer.isBuffer(isi)) {
+    await fs.writeFile(absolut, isi);
+  } else {
+    await fs.writeFile(absolut, isi, "utf-8");
+  }
 }
 
 async function hapusLokal(relatif: string): Promise<void> {
@@ -144,7 +149,7 @@ async function hapusLokal(relatif: string): Promise<void> {
 
 export async function simpanBerkas(
   relatif: string,
-  isi: string,
+  isi: string | Buffer,
   pesan: string,
 ): Promise<void> {
   if (contentWriteMode() === "github") {
