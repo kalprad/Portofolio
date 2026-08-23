@@ -16,6 +16,9 @@ const TAUTAN = [
   { href: "/cv", label: "CV" },
 ];
 
+/** Tautan tambahan yang cuma tampil buat pemilik situs yang sedang masuk. */
+const TAUTAN_ADMIN = [{ href: "/admin/kerja", label: "Kerja" }];
+
 export function HeaderNav({
   nama,
   isAdmin,
@@ -27,6 +30,7 @@ export function HeaderNav({
 }) {
   const pathname = usePathname();
   const [terbuka, setTerbuka] = useState(false);
+  const tautan = isAdmin ? [...TAUTAN, ...TAUTAN_ADMIN] : TAUTAN;
 
   // Menu mobile ditutup setiap kali rute berubah — tombol kembali peramban
   // tidak boleh meninggalkan panel yang menggantung terbuka.
@@ -58,7 +62,7 @@ export function HeaderNav({
 
           <nav aria-label="Navigasi utama" className="hidden md:block">
             <ul className="flex items-center gap-1 rounded-full border border-border bg-muted/60 p-1">
-              {TAUTAN.map((t) => (
+              {tautan.map((t) => (
                 <li key={t.href}>
                   <Link
                     href={t.href}
@@ -119,7 +123,7 @@ export function HeaderNav({
         >
           <Container size="wide">
             <ul className="flex flex-col py-2">
-              {TAUTAN.map((t) => (
+              {tautan.map((t) => (
                 <li key={t.href}>
                   <Link
                     href={t.href}

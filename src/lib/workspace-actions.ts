@@ -35,6 +35,17 @@ function butuhSheets(): FormState | null {
   return ws.workspaceSheetsConfigured() ? null : SHEETS_BELUM_SIAP;
 }
 
+/**
+ * Ubah galat tak terduga (mis. kunci Google salah format) jadi pesan yang
+ * tampil rapi di formulir — tanpa ini, penyimpanan yang gagal muncul sebagai
+ * halaman galat generik Next.js ("Application error"), bukan pesan yang bisa
+ * dibaca dan ditindaklanjuti pengguna.
+ */
+function pesanGalat(err: unknown): FormState {
+  console.error("[kerja] aksi gagal:", err);
+  return { ok: false, message: err instanceof Error ? err.message : "Gagal menyimpan." };
+}
+
 function refreshKerja(proyekId?: string | null) {
   revalidatePath("/admin/kerja");
   revalidatePath("/admin/kerja/jadwal");
@@ -106,14 +117,22 @@ export async function buatProyek(_prev: FormState, formData: FormData): Promise<
   const judul = String(formData.get("judul") ?? "").trim();
   if (!judul) return { ok: false, message: "Judul proyek wajib diisi." };
 
-  const proyek = await ws.createProject({
-    judul,
-    deskripsi: String(formData.get("deskripsi") ?? "").trim() || null,
-    warna: String(formData.get("warna") ?? "").trim() || null,
-  });
+  let proyekId: string;
+  try {
+    const proyek = await ws.createProject({
+      judul,
+      deskripsi: String(formData.get("deskripsi") ?? "").trim() || null,
+      warna: String(formData.get("warna") ?? "").trim() || null,
+    });
+    proyekId = proyek.id;
+  } catch (err) {
+    return pesanGalat(err);
+  }
 
+  // redirect() harus di luar try/catch — ia bekerja dengan cara "melempar"
+  // sinyal navigasi, dan catch di atas akan salah menangkapnya sebagai galat.
   revalidatePath("/admin/kerja");
-  redirect(`/admin/kerja/proyek/${proyek.id}`);
+  redirect(`/admin/kerja/proyek/${proyekId}`);
 }
 
 export async function perbaruiProyek(
@@ -128,12 +147,16 @@ export async function perbaruiProyek(
   const judul = String(formData.get("judul") ?? "").trim();
   if (!judul) return { ok: false, message: "Judul proyek wajib diisi." };
 
-  await ws.updateProject(id, {
-    judul,
-    deskripsi: String(formData.get("deskripsi") ?? "").trim() || null,
-    status: String(formData.get("status") ?? "aktif") as ProjectStatus,
-    warna: String(formData.get("warna") ?? "").trim() || null,
-  });
+  try {
+    await ws.updateProject(id, {
+      judul,
+      deskripsi: String(formData.get("deskripsi") ?? "").trim() || null,
+      status: String(formData.get("status") ?? "aktif") as ProjectStatus,
+      warna: String(formData.get("warna") ?? "").trim() || null,
+    });
+  } catch (err) {
+    return pesanGalat(err);
+  }
 
   refreshKerja(id);
   return { ok: true, message: "Tersimpan." };
@@ -142,8 +165,12 @@ export async function perbaruiProyek(
 export async function ubahStatusProyekAksi(id: string, status: ProjectStatus): Promise<void> {
   await pastikanAdmin();
   if (!ws.workspaceSheetsConfigured()) return;
-  await ws.updateProject(id, { status });
-  refreshKerja(id);
+  try {
+    await ws.updateProject(id, { status });
+    refreshKerja(id);
+  } catch (err) {
+    console.error("[kerja] ubah status proyek gagal:", err);
+  }
 }
 
 // --- Tugas ---------------------------------------------------------------------
@@ -159,8 +186,12 @@ export async function tambahTugasCepat(
   const judul = String(formData.get("judul") ?? "").trim();
   if (!judul) return;
 
-  await ws.createTask({ proyekId, judul, status });
-  refreshKerja(proyekId);
+  try {
+    await ws.createTask({ proyekId, judul, status });
+    refreshKerja(proyekId);
+  } catch (err) {
+    console.error("[kerja] tambah tugas cepat gagal:", err);
+  }
 }
 
 export async function perbaruiTugas(
@@ -178,19 +209,23 @@ export async function perbaruiTugas(
 
   const tenggatMentah = String(formData.get("tenggat") ?? "").trim();
 
-  const sebelum = await ws.getTask(id);
-  if (!sebelum) return { ok: false, message: "Tugas tidak ditemukan." };
+  try {
+    const sebelum = await ws.getTask(id);
+    if (!sebelum) return { ok: false, message: "Tugas tidak ditemukan." };
 
-  const setelahDasar: WorkTask = {
-    ...sebelum,
-    judul,
-    deskripsi: String(formData.get("deskripsi") ?? "").trim() || null,
-    prioritas: String(formData.get("prioritas") ?? "sedang") as TaskPriority,
-    tenggat: tenggatMentah || null,
-  };
+    const setelahDasar: WorkTask = {
+      ...sebelum,
+      judul,
+      deskripsi: String(formData.get("deskripsi") ?? "").trim() || null,
+      prioritas: String(formData.get("prioritas") ?? "sedang") as TaskPriority,
+      tenggat: tenggatMentah || null,
+    };
 
-  const patchCalendar = await sinkronTugasKeCalendar(setelahDasar);
-  await ws.updateTask(id, { ...setelahDasar, ...patchCalendar });
+    const patchCalendar = await sinkronTugasKeCalendar(setelahDasar);
+    await ws.updateTask(id, { ...setelahDasar, ...patchCalendar });
+  } catch (err) {
+    return pesanGalat(err);
+  }
 
   refreshKerja(proyekId);
   return { ok: true, message: "Tersimpan." };
@@ -205,18 +240,26 @@ export async function pindahkanTugas(
 ): Promise<void> {
   await pastikanAdmin();
   if (!ws.workspaceSheetsConfigured()) return;
-  await ws.updateTask(id, { status, urutan });
-  refreshKerja(proyekId);
+  try {
+    await ws.updateTask(id, { status, urutan });
+    refreshKerja(proyekId);
+  } catch (err) {
+    console.error("[kerja] pindah tugas gagal:", err);
+  }
 }
 
 export async function hapusTugasAksi(id: string, proyekId: string): Promise<void> {
   await pastikanAdmin();
   if (!ws.workspaceSheetsConfigured()) return;
-  const tugas = await ws.deleteTask(id);
-  if (tugas?.calendarEventId) {
-    await hapusEvent(tugas.calendarEventId).catch((err) => console.error("[kerja] hapus event tugas gagal:", err));
+  try {
+    const tugas = await ws.deleteTask(id);
+    if (tugas?.calendarEventId) {
+      await hapusEvent(tugas.calendarEventId).catch((err) => console.error("[kerja] hapus event tugas gagal:", err));
+    }
+    refreshKerja(proyekId);
+  } catch (err) {
+    console.error("[kerja] hapus tugas gagal:", err);
   }
-  refreshKerja(proyekId);
 }
 
 // --- Catatan ---------------------------------------------------------------------
@@ -233,11 +276,15 @@ export async function buatCatatan(
   const judul = String(formData.get("judul") ?? "").trim();
   if (!judul) return { ok: false, message: "Judul catatan wajib diisi." };
 
-  await ws.createNote({
-    proyekId,
-    judul,
-    isi: String(formData.get("isi") ?? ""),
-  });
+  try {
+    await ws.createNote({
+      proyekId,
+      judul,
+      isi: String(formData.get("isi") ?? ""),
+    });
+  } catch (err) {
+    return pesanGalat(err);
+  }
 
   refreshKerja(proyekId);
   return { ok: true, message: "Catatan tersimpan." };
@@ -256,7 +303,11 @@ export async function perbaruiCatatan(
   const judul = String(formData.get("judul") ?? "").trim();
   if (!judul) return { ok: false, message: "Judul catatan wajib diisi." };
 
-  await ws.updateNote(id, { judul, isi: String(formData.get("isi") ?? "") });
+  try {
+    await ws.updateNote(id, { judul, isi: String(formData.get("isi") ?? "") });
+  } catch (err) {
+    return pesanGalat(err);
+  }
 
   refreshKerja(proyekId);
   return { ok: true, message: "Tersimpan." };
@@ -265,8 +316,12 @@ export async function perbaruiCatatan(
 export async function hapusCatatanAksi(id: string, proyekId: string): Promise<void> {
   await pastikanAdmin();
   if (!ws.workspaceSheetsConfigured()) return;
-  await ws.deleteNote(id);
-  refreshKerja(proyekId);
+  try {
+    await ws.deleteNote(id);
+    refreshKerja(proyekId);
+  } catch (err) {
+    console.error("[kerja] hapus catatan gagal:", err);
+  }
 }
 
 // --- Jadwal ---------------------------------------------------------------------
@@ -283,18 +338,22 @@ export async function buatJadwal(_prev: FormState, formData: FormData): Promise<
   const proyekId = String(formData.get("proyek_id") ?? "").trim() || null;
   const selesaiMentah = String(formData.get("selesai") ?? "").trim() || null;
 
-  const dasar = await ws.createSchedule({
-    proyekId,
-    judul,
-    deskripsi: String(formData.get("deskripsi") ?? "").trim() || null,
-    mulai,
-    selesai: selesaiMentah,
-    lokasi: String(formData.get("lokasi") ?? "").trim() || null,
-  });
+  try {
+    const dasar = await ws.createSchedule({
+      proyekId,
+      judul,
+      deskripsi: String(formData.get("deskripsi") ?? "").trim() || null,
+      mulai,
+      selesai: selesaiMentah,
+      lokasi: String(formData.get("lokasi") ?? "").trim() || null,
+    });
 
-  const patchCalendar = await sinkronJadwalKeCalendar(dasar);
-  if (Object.keys(patchCalendar).length > 0) {
-    await ws.updateSchedule(dasar.id, patchCalendar);
+    const patchCalendar = await sinkronJadwalKeCalendar(dasar);
+    if (Object.keys(patchCalendar).length > 0) {
+      await ws.updateSchedule(dasar.id, patchCalendar);
+    }
+  } catch (err) {
+    return pesanGalat(err);
   }
 
   refreshKerja(proyekId ?? undefined);
@@ -314,31 +373,41 @@ export async function perbaruiJadwal(
   const mulai = String(formData.get("mulai") ?? "").trim();
   if (!judul || !mulai) return { ok: false, message: "Judul dan waktu mulai wajib diisi." };
 
-  const sebelum = await ws.getScheduleItem(id);
-  if (!sebelum) return { ok: false, message: "Jadwal tidak ditemukan." };
+  let proyekTerkait: string | null = null;
+  try {
+    const sebelum = await ws.getScheduleItem(id);
+    if (!sebelum) return { ok: false, message: "Jadwal tidak ditemukan." };
 
-  const setelahDasar: WorkSchedule = {
-    ...sebelum,
-    judul,
-    deskripsi: String(formData.get("deskripsi") ?? "").trim() || null,
-    mulai,
-    selesai: String(formData.get("selesai") ?? "").trim() || null,
-    lokasi: String(formData.get("lokasi") ?? "").trim() || null,
-  };
+    const setelahDasar: WorkSchedule = {
+      ...sebelum,
+      judul,
+      deskripsi: String(formData.get("deskripsi") ?? "").trim() || null,
+      mulai,
+      selesai: String(formData.get("selesai") ?? "").trim() || null,
+      lokasi: String(formData.get("lokasi") ?? "").trim() || null,
+    };
+    proyekTerkait = setelahDasar.proyekId;
 
-  const patchCalendar = await sinkronJadwalKeCalendar(setelahDasar);
-  await ws.updateSchedule(id, { ...setelahDasar, ...patchCalendar });
+    const patchCalendar = await sinkronJadwalKeCalendar(setelahDasar);
+    await ws.updateSchedule(id, { ...setelahDasar, ...patchCalendar });
+  } catch (err) {
+    return pesanGalat(err);
+  }
 
-  refreshKerja(setelahDasar.proyekId ?? undefined);
+  refreshKerja(proyekTerkait ?? undefined);
   return { ok: true, message: "Tersimpan." };
 }
 
 export async function hapusJadwalAksi(id: string): Promise<void> {
   await pastikanAdmin();
   if (!ws.workspaceSheetsConfigured()) return;
-  const jadwal = await ws.deleteSchedule(id);
-  if (jadwal?.calendarEventId) {
-    await hapusEvent(jadwal.calendarEventId).catch((err) => console.error("[kerja] hapus event jadwal gagal:", err));
+  try {
+    const jadwal = await ws.deleteSchedule(id);
+    if (jadwal?.calendarEventId) {
+      await hapusEvent(jadwal.calendarEventId).catch((err) => console.error("[kerja] hapus event jadwal gagal:", err));
+    }
+    refreshKerja(jadwal?.proyekId ?? undefined);
+  } catch (err) {
+    console.error("[kerja] hapus jadwal gagal:", err);
   }
-  refreshKerja(jadwal?.proyekId ?? undefined);
 }
