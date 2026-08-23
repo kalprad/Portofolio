@@ -18,7 +18,8 @@ export type FieldType =
   | "tags"
   | "url"
   | "drive"
-  | "image";
+  | "image"
+  | "sociallinks";
 
 export interface FieldDef {
   name: string;
@@ -294,6 +295,11 @@ const profile: ResourceDef = {
     {
       name: "hero_photo_url", label: "Foto santai", type: "image", full: true, group: "Foto",
       hint: "Dipakai di beranda, di samping nama Anda.",
+    },
+
+    {
+      name: "social_links", label: "Tautan sosial", type: "sociallinks", full: true, group: "Tautan sosial",
+      hint: "Tampil di beranda dan kaki setiap halaman. Ikon ditebak otomatis dari labelnya.",
     },
   ],
 };

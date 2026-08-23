@@ -17,7 +17,6 @@ import {
   currentArchiveCollections,
   currentCvEntries,
   currentPosts,
-  currentProfile,
   currentProjects,
 } from "@/lib/content-live";
 import { slugify, readingMinutes } from "@/lib/utils";
@@ -73,6 +72,30 @@ function bacaNilai(field: FieldDef, formData: FormData): unknown {
       const teks = String(mentah ?? "").trim();
       // Terima URL Drive maupun ID mentah — pengguna tinggal tempel apa adanya.
       return teks === "" ? null : extractDriveId(teks) || null;
+    }
+
+    case "sociallinks": {
+      let baris: unknown;
+      try {
+        baris = JSON.parse(String(mentah ?? "[]"));
+      } catch {
+        return [];
+      }
+      if (!Array.isArray(baris)) return [];
+
+      return baris
+        .map((b) => ({
+          label: String((b as { label?: unknown }).label ?? "").trim(),
+          url: String((b as { url?: unknown }).url ?? "").trim(),
+        }))
+        // Baris kosong yang ditambah lalu tidak diisi tidak perlu tersimpan.
+        .filter((b) => b.label !== "" && b.url !== "")
+        .map((b) => ({
+          ...b,
+          // Pengguna kadang lupa mengetik protokolnya — daripada tautan mati,
+          // anggap https:// kalau tidak ada.
+          url: /^https?:\/\//i.test(b.url) ? b.url : `https://${b.url}`,
+        }));
     }
 
     case "date":
@@ -360,15 +383,7 @@ function tanpaItems(
 }
 
 async function simpanProfil(nilai: Record<string, unknown>) {
-  const lama = await currentProfile();
-
-  await simpanBerkas(
-    PATHS.profile,
-    // Tautan sosial tidak disunting lewat formulir ini, jadi nilai lamanya
-    // dipertahankan alih-alih ikut terhapus.
-    keJson({ ...nilai, social_links: lama?.social_links ?? [] }),
-    "konten: perbarui profil",
-  );
+  await simpanBerkas(PATHS.profile, keJson(nilai), "konten: perbarui profil");
 
   return { slug: "profile" };
 }

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/primitives";
 import { simpanEntitas } from "@/app/admin/actions";
 import { ImageUploadField } from "@/components/admin/image-upload-field";
+import { SocialLinksField } from "@/components/admin/social-links-field";
 import { fieldGroups, type FieldDef, type ResourceDef } from "@/lib/admin-schema";
 import { FORM_STATE_AWAL } from "@/lib/form-state";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,9 @@ type Nilai = Record<string, unknown>;
 function nilaiAwal(field: FieldDef, data: Nilai): string {
   const v = data[field.name];
   if (v === null || v === undefined) return "";
+  // Array objek (tautan sosial) perlu tetap jadi JSON, bukan digabung koma
+  // seperti daftar kata kunci biasa.
+  if (field.type === "sociallinks") return JSON.stringify(v ?? []);
   if (Array.isArray(v)) return v.join(", ");
   if (field.type === "datetime" && typeof v === "string") {
     // <input type="datetime-local"> hanya menerima "YYYY-MM-DDTHH:mm".
@@ -58,6 +62,20 @@ function KolomIsian({
         className="sm:col-span-2"
       >
         <ImageUploadField name={field.name} awal={awal} prefix={field.name} />
+      </Field>
+    );
+  }
+
+  if (field.type === "sociallinks") {
+    return (
+      <Field
+        label={field.label}
+        htmlFor={id}
+        hint={field.hint}
+        error={error}
+        className="sm:col-span-2"
+      >
+        <SocialLinksField name={field.name} awal={awal} />
       </Field>
     );
   }
