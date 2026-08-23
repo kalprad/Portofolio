@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { buatEvent, calendarConfigured, hapusEvent, perbaruiEvent } from "@/lib/calendar";
+import { emailConfigured, kirimEmail } from "@/lib/email";
+import { templateRingkasanProyek } from "@/lib/email-templates";
 import { keRFC3339, tambahMenit } from "@/lib/workspace-utils";
 import * as ws from "@/lib/workspace-sheets";
 import type { ProjectStatus, TaskPriority, TaskStatus, WorkSchedule, WorkTask } from "@/lib/workspace-types";
@@ -410,4 +412,54 @@ export async function hapusJadwalAksi(id: string): Promise<void> {
   } catch (err) {
     console.error("[kerja] hapus jadwal gagal:", err);
   }
+}
+
+// --- Ringkasan email -------------------------------------------------------------
+
+export async function kirimRingkasanProyek(
+  proyekId: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const sesi = await requireAdmin();
+  if (!sesi) return { ok: false, message: "Tidak berwenang. Masuk ulang dengan akun admin." };
+
+  if (!emailConfigured()) {
+    return {
+      ok: false,
+      message: "Pengiriman email belum disetel. Isi EMAIL_SMTP_USER dan EMAIL_SMTP_PASSWORD di environment variable.",
+    };
+  }
+  const belumSiap = butuhSheets();
+  if (belumSiap) return belumSiap;
+
+  const ke = String(formData.get("ke") ?? "").trim() || sesi.user?.email || "";
+  if (!ke) return { ok: false, message: "Alamat tujuan wajib diisi." };
+
+  try {
+    const [proyek, tugas, catatan, jadwalSemua] = await Promise.all([
+      ws.getProject(proyekId),
+      ws.listTasks(proyekId),
+      ws.listNotes(proyekId),
+      ws.listSchedule(),
+    ]);
+    if (!proyek) return { ok: false, message: "Proyek tidak ditemukan." };
+
+    const jadwal = jadwalSemua.filter((j) => j.proyekId === proyekId);
+    const situsUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+
+    const html = templateRingkasanProyek({
+      proyek,
+      tugas,
+      catatan,
+      jadwal,
+      urlProyek: `${situsUrl}/ultraproduktif/proyek/${proyekId}`,
+    });
+
+    await kirimEmail({ ke, subjek: `Ringkasan proyek: ${proyek.judul}`, html });
+  } catch (err) {
+    return pesanGalat(err);
+  }
+
+  return { ok: true, message: `Ringkasan terkirim ke ${ke}.` };
 }

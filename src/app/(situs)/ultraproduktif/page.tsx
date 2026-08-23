@@ -1,11 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { CalendarDays, GitBranch as SheetIcon, Plus } from "lucide-react";
+import { CalendarDays, GitBranch as SheetIcon, Mail, Plus } from "lucide-react";
 import { Badge, ButtonLink, EmptyState } from "@/components/ui/primitives";
 import { AgendaList } from "@/components/kerja/agenda-list";
 import { SinkronButton } from "@/components/kerja/sinkron-button";
 import { listProjects, listSchedule, listTasks, workspaceSheetsConfigured, workspaceSheetUrl } from "@/lib/workspace-sheets";
 import { calendarConfigured } from "@/lib/calendar";
+import { emailConfigured } from "@/lib/email";
 import { buatAgenda } from "@/lib/workspace-utils";
 import { PROJECT_STATUS_LABEL } from "@/lib/workspace-types";
 
@@ -39,6 +40,7 @@ export default async function KerjaRingkasanPage() {
   const judulProyek = new Map(proyek.map((p) => [p.id, p.judul] as const));
   const agenda = buatAgenda(tugasSemua, jadwal, judulProyek).slice(0, 6);
   const kalenderSiap = calendarConfigured();
+  const emailSiap = emailConfigured();
   const urlSheet = workspaceSheetUrl();
 
   return (
@@ -135,6 +137,30 @@ export default async function KerjaRingkasanPage() {
                   <SinkronButton />
                 </div>
               ) : null}
+            </div>
+          </div>
+
+          <div className="flex items-start gap-4 p-5">
+            <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground">
+              <Mail className="size-4" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-medium">Kirim ringkasan email</p>
+                <Badge tone={emailSiap ? "success" : "warning"}>{emailSiap ? "Aktif" : "Belum aktif"}</Badge>
+              </div>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                {emailSiap ? (
+                  <>Tombol &quot;Kirim ringkasan&quot; di tiap halaman proyek siap dipakai.</>
+                ) : (
+                  <>
+                    Buat App Password di akun Gmail lo, lalu isi{" "}
+                    <code className="rounded bg-muted px-1.5 py-0.5 text-xs">EMAIL_SMTP_USER</code> dan{" "}
+                    <code className="rounded bg-muted px-1.5 py-0.5 text-xs">EMAIL_SMTP_PASSWORD</code>. Langkahnya
+                    ada di README bagian 10.4.
+                  </>
+                )}
+              </p>
             </div>
           </div>
         </div>

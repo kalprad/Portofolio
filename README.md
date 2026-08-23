@@ -287,6 +287,8 @@ src/
     ├── workspace-actions.ts  # Server action area Kerja + dorong ke Calendar
     ├── workspace-types.ts    # Bentuk data area Kerja
     ├── workspace-utils.ts    # Format tanggal/jam, agenda gabungan
+    ├── email.ts              # Kirim email lewat SMTP Gmail
+    ├── email-templates.ts    # Templat HTML ringkasan proyek
     ├── auth.ts           # Peran & aturan domain UGM
     ├── queries.ts        # Baca untuk halaman publik
     ├── admin-queries.ts  # Baca untuk panel (termasuk draf)
@@ -374,7 +376,7 @@ otomatis muncul di Calendar, dan sebaliknya — edit langsung di Calendar
 
 Sisi "situs → Calendar" terjadi seketika setiap tugas/jadwal disimpan. Sisi
 sebaliknya ("Calendar → situs") diperiksa berkala oleh Vercel Cron, sudah
-disetel di `vercel.json` (tiap 10 menit), memanggil
+disetel di `vercel.json` (sekali sehari — lihat catatan di bawah), memanggil
 `/api/cron/sinkron-kalender`.
 
 **Catatan paket Vercel gratis (Hobby):** cron di paket ini CUMA BOLEH jalan
@@ -388,6 +390,30 @@ atau naik ke paket Pro (cron per-menit) kalau sinkron real-time penting.
 Opsional: isi `CRON_SECRET` dengan teks acak supaya endpoint sinkron tidak
 bisa dipicu sembarang orang — Vercel otomatis mengirim nilai itu tiap
 memanggil cron-nya sendiri.
+
+### 10.4 Kirim ringkasan proyek lewat email
+
+Tombol **"Kirim ringkasan"** di halaman tiap proyek merangkum papan tugas,
+catatan, dan jadwal terkait jadi satu email HTML, dikirim ke alamat pilihan
+lo (kosongkan kolomnya untuk kirim ke email akun yang sedang login).
+
+Pengirimnya lewat SMTP Gmail akun pribadi — bukan daftar ke layanan pihak
+ketiga baru (Resend, SendGrid, dst). Setupnya:
+
+1. Nyalakan **2-Step Verification** di akun Google yang mau dipakai ngirim
+   (Setelan Akun Google → Keamanan → Verifikasi 2 Langkah) — App Password
+   tidak bisa dibuat tanpa ini aktif dulu.
+2. Buka **[myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)**,
+   bikin App Password baru, kasih nama bebas misal "Ultraproduktif". Google
+   kasih kode 16 karakter — copy itu (cuma ditampilkan sekali).
+3. Isi di environment variable:
+   - `EMAIL_SMTP_USER` — alamat Gmail yang dipakai (boleh sama dengan
+     `ADMIN_EMAILS`, boleh beda).
+   - `EMAIL_SMTP_PASSWORD` — kode 16 karakter dari langkah 2 (BUKAN password
+     akun Google biasa — password akun biasa tidak akan diterima).
+
+Batas kirim akun Gmail biasa adalah 500 email/hari, jauh lebih dari cukup
+untuk kirim ringkasan sesekali.
 
 ---
 
