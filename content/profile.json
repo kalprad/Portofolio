@@ -7,10 +7,11 @@
   "tagline_en": null,
   "bio_en": null,
   "location": "Yogyakarta, Indonesia",
-  "email": "rizkihaikal@gmail.com",
+  "email": "rizkihaikalpradana@mail.ugm.ac.id",
   "phone": null,
-  "avatar_url": "https://drive.google.com/file/d/1nvLUcFu8ttm56QhnEbX4IZBOQP8f_hS4/view?usp=sharing",
   "cv_file_url": "https://drive.google.com/file/d/1DC2XTvNG6Px1ZhSGWh75g1VB0hv3qWt_/view?usp=sharing",
+  "avatar_url": "/foto/avatarurl-85b5c5ef.webp",
+  "hero_photo_url": "/foto/herophotourl-010b9c86.webp",
   "social_links": [
     {
       "label": "LinkedIn",
@@ -32,6 +33,5 @@
       "label": "YouTube",
       "url": "https://youtube.com/@"
     }
-  ],
-  "hero_photo_url": "/foto/potret-2.webp"
+  ]
 }
