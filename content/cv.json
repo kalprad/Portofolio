@@ -1,20 +1,20 @@
 {
   "entries": [
     {
-      "id": "cv-magister",
       "section": "pendidikan",
       "title_id": "Magister Teknik Sipil - Teknik Struktur",
-      "title_en": null,
       "organization": "Universitas Gadjah Mada",
       "location": "Yogyakarta",
-      "start_date": "2024-08-01",
+      "description_id": "Fokus riset: dinamika struktur dan sistem peredam getaran. Tesis mengenai efektivitas damper pada struktur slab on pile.",
+      "title_en": null,
+      "description_en": null,
+      "start_date": "2026-08-01",
       "end_date": null,
       "is_current": true,
-      "description_id": "Fokus riset: dinamika struktur dan sistem peredam getaran. Tesis mengenai efektivitas damper pada struktur slab on pile.",
-      "description_en": null,
       "url": null,
       "sort_order": 1,
-      "is_published": true
+      "is_published": true,
+      "id": "cv-magister"
     },
     {
       "id": "cv-asisten-peneliti",
@@ -159,22 +159,6 @@
       "url": null,
       "sort_order": 3,
       "is_published": true
-    },
-    {
-      "section": "pendidikan",
-      "title_id": "Siswa",
-      "organization": "SMA Pradita Dirgantara",
-      "location": "Boyolali, Indonesia",
-      "description_id": null,
-      "title_en": null,
-      "description_en": null,
-      "start_date": "2020-08-01",
-      "end_date": "2023-08-01",
-      "is_current": false,
-      "url": null,
-      "sort_order": 3,
-      "is_published": true,
-      "id": "cv-siswa-mt5r8vm7"
     }
   ]
 }
