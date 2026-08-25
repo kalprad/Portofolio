@@ -177,11 +177,14 @@ function CatatanBaruForm({ proyekId, onSelesai }: { proyekId: string; onSelesai:
         }
 
         setStatus(`Mengunggah ${berkas.name}…`);
+        // Bukan PUT langsung ke Drive dari sini — Drive tidak mengizinkan CORS
+        // buat unggahan resumable dari peramban. Lewat relai sesama domain
+        // sendiri dulu (lihat route.ts-nya) yang meneruskan ke Drive.
         let hasilUnggah: Response;
         try {
-          hasilUnggah = await fetch(sesi.url, {
-            method: "PUT",
-            headers: { "Content-Type": berkas.type || "application/octet-stream" },
+          hasilUnggah = await fetch("/api/ultraproduktif/catatan/unggah", {
+            method: "POST",
+            headers: { "X-Sesi-Url": sesi.url, "Content-Type": berkas.type || "application/octet-stream" },
             body: berkas,
           });
         } catch {
