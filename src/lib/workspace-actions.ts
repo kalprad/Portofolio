@@ -6,6 +6,8 @@ import { requireAdmin } from "@/lib/auth";
 import { buatEvent, calendarConfigured, hapusEvent, perbaruiEvent } from "@/lib/calendar";
 import { emailConfigured, kirimEmail } from "@/lib/email";
 import { templateRingkasanProyek } from "@/lib/email-templates";
+import { catatanFolderId, extractDriveId, fetchDriveMetadata, mulaiSesiUnggahDrive } from "@/lib/drive";
+import { serviceAccountConfigured } from "@/lib/google";
 import { keRFC3339, tambahMenit } from "@/lib/workspace-utils";
 import * as ws from "@/lib/workspace-sheets";
 import type { ProjectStatus, TaskPriority, TaskStatus, WorkSchedule, WorkTask } from "@/lib/workspace-types";
@@ -266,6 +268,84 @@ export async function hapusTugasAksi(id: string, proyekId: string): Promise<void
 
 // --- Catatan ---------------------------------------------------------------------
 
+interface LampiranCatatan {
+  berkasDriveId: string | null;
+  berkasNama: string | null;
+  berkasMime: string | null;
+  berkasUkuran: number | null;
+}
+
+const LAMPIRAN_KOSONG: LampiranCatatan = {
+  berkasDriveId: null,
+  berkasNama: null,
+  berkasMime: null,
+  berkasUkuran: null,
+};
+
+/**
+ * Mulai sesi unggah Drive buat SATU berkas lampiran Catatan — dipanggil dari
+ * client SEBELUM `buatCatatan`. Peramban lalu PUT isi berkasnya langsung ke
+ * URL sesi yang dibalikkan ini (lihat `mulaiSesiUnggahDrive` di drive.ts buat
+ * alasannya), dan hasil metadata dari PUT itu baru dikirim ke `buatCatatan`
+ * lewat kolom `berkas_drive_id` dkk di form.
+ */
+export async function mulaiUnggahCatatan(
+  namaBerkas: string,
+  mimeType: string,
+): Promise<{ ok: true; url: string } | { ok: false; message: string }> {
+  await pastikanAdmin();
+
+  const folderId = catatanFolderId();
+  if (!serviceAccountConfigured() || !folderId) {
+    return {
+      ok: false,
+      message: "Unggah berkas belum disetel. Isi GOOGLE_DRIVE_CATATAN_FOLDER_ID (lihat README §10.5) dulu.",
+    };
+  }
+
+  try {
+    const url = await mulaiSesiUnggahDrive({
+      folderId,
+      fileName: namaBerkas,
+      mimeType: mimeType || "application/octet-stream",
+    });
+    return { ok: true, url };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : "Gagal memulai sesi unggah." };
+  }
+}
+
+/**
+ * Ambil lampiran dari form Catatan — dua jalur: metadata berkas yang sudah
+ * selesai diunggah peramban langsung ke Drive (lihat `mulaiUnggahCatatan`),
+ * atau tautan/ID Drive ditempel manual (buat berkas yang sudah ada di Drive
+ * tanpa perlu unggah ulang). Kosongkan formulirnya kalau dua-duanya nihil.
+ */
+async function ambilLampiranCatatan(formData: FormData): Promise<LampiranCatatan> {
+  const driveIdLangsung = String(formData.get("berkas_drive_id") ?? "").trim();
+  if (driveIdLangsung) {
+    const ukuran = Number(formData.get("berkas_ukuran"));
+    return {
+      berkasDriveId: driveIdLangsung,
+      berkasNama: String(formData.get("berkas_nama") ?? "").trim() || null,
+      berkasMime: String(formData.get("berkas_mime") ?? "").trim() || null,
+      berkasUkuran: Number.isFinite(ukuran) && ukuran > 0 ? ukuran : null,
+    };
+  }
+
+  const tautan = String(formData.get("berkas_tautan") ?? "").trim();
+  if (tautan) {
+    const id = extractDriveId(tautan);
+    if (!id) throw new Error("Tautan/ID Drive tidak dikenali.");
+    const meta = serviceAccountConfigured() ? await fetchDriveMetadata(id) : null;
+    return meta
+      ? { berkasDriveId: meta.id, berkasNama: meta.name, berkasMime: meta.mimeType, berkasUkuran: meta.size }
+      : { berkasDriveId: id, berkasNama: tautan, berkasMime: null, berkasUkuran: null };
+  }
+
+  return LAMPIRAN_KOSONG;
+}
+
 export async function buatCatatan(
   proyekId: string,
   _prev: FormState,
@@ -279,10 +359,12 @@ export async function buatCatatan(
   if (!judul) return { ok: false, message: "Judul catatan wajib diisi." };
 
   try {
+    const lampiran = await ambilLampiranCatatan(formData);
     await ws.createNote({
       proyekId,
       judul,
       isi: String(formData.get("isi") ?? ""),
+      ...lampiran,
     });
   } catch (err) {
     return pesanGalat(err);

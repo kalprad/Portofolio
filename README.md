@@ -279,7 +279,7 @@ src/
     ├── content.ts        # Baca konten dari berkas
     ├── content-write.ts  # Tulis balik: disk (dev) atau commit (produksi)
     ├── google.ts         # Kredensial service account bersama
-    ├── drive.ts          # Dua mode akses Drive
+    ├── drive.ts          # Baca Arsip (dua mode) + unggah lampiran Catatan
     ├── sheets.ts         # Jejak akses
     ├── sheets-db.ts       # Mesin baca-tulis Sheets generik, dasar area Kerja
     ├── calendar.ts        # Sinkron dua arah Google Calendar
@@ -343,7 +343,7 @@ jejak akses di §5, cuma datanya lebih banyak jenisnya.
    |---|---|
    | `Proyek` | `id, judul, deskripsi, status, warna, dibuat_pada, diubah_pada, dihapus` |
    | `Tugas` | `id, proyek_id, judul, deskripsi, status, prioritas, tenggat, urutan, calendar_event_id, calendar_diubah_pada, dibuat_pada, diubah_pada, dihapus` |
-   | `Catatan` | `id, proyek_id, judul, isi, dibuat_pada, diubah_pada, dihapus` |
+   | `Catatan` | `id, proyek_id, judul, isi, dibuat_pada, diubah_pada, dihapus, berkas_drive_id, berkas_nama, berkas_mime, berkas_ukuran` |
    | `Jadwal` | `id, proyek_id, judul, deskripsi, mulai, selesai, lokasi, calendar_event_id, calendar_diubah_pada, dibuat_pada, diubah_pada, dihapus` |
    | `Sinkron` | `kunci, nilai` |
 
@@ -355,6 +355,11 @@ jejak akses di §5, cuma datanya lebih banyak jenisnya.
 Kolom `dihapus` bukan salah ketik — item yang "dihapus" cuma ditandai di
 kolom itu, barisnya tidak sungguh-sungguh dibuang, supaya baris lain tidak
 ikut bergeser nomornya.
+
+Kalau tab `Catatan` sudah pernah dibuat SEBELUM fitur lampiran (§10.5) ada,
+tambahkan 4 header di ujung baris pertamanya: `berkas_drive_id, berkas_nama,
+berkas_mime, berkas_ukuran` — baris lama otomatis kebaca kosong di kolom
+baru itu, tidak perlu diisi manual.
 
 ### 10.2 Siapkan sinkron Google Calendar
 
@@ -414,6 +419,45 @@ ketiga baru (Resend, SendGrid, dst). Setupnya:
 
 Batas kirim akun Gmail biasa adalah 500 email/hari, jauh lebih dari cukup
 untuk kirim ringkasan sesekali.
+
+### 10.5 Lampiran berkas di Catatan (Google Drive)
+
+Form Catatan punya tombol unggah berkas — hasilnya masuk ke SATU folder
+Drive tetap, dan waktu catatannya dibuka, berkasnya bisa langsung dilihat di
+dalam halaman (iframe pratinjau resmi Drive) tanpa loncat ke Drive dulu, plus
+ada tombol unduh langsung.
+
+Beda dari §5 (Arsip, publik, sengaja menyembunyikan URL Drive dari
+pengunjung), Ultraproduktif privat — cuma Anda yang bisa buka — jadi pratinjau
+& unduhnya langsung pakai tautan Drive resmi apa adanya, bukan diproksi lewat
+server. Konsekuensinya: peramban yang dipakai buka `/ultraproduktif` perlu
+sedang login ke akun Google yang sama (atau akun itu otomatis dapat akses,
+karena jadi pemilik folder asalnya) — kalau belum, Drive akan minta login
+dulu di dalam iframe/tab unduhannya, bukan jalan buntu.
+
+1. Buat satu folder Drive khusus lampiran Catatan (terpisah dari folder-folder
+   materi Arsip di §5).
+2. Bagikan folder itu ke alamat service account
+   (`GOOGLE_SERVICE_ACCOUNT_EMAIL`, lihat §5) sebagai **Editor** — bukan cuma
+   Viewer, karena kali ini server yang MENULIS berkas baru ke situ.
+3. Salin ID-nya dari URL folder —
+   `drive.google.com/drive/folders/<ID-NYA>` — isi `GOOGLE_DRIVE_CATATAN_FOLDER_ID`.
+
+**Tidak ada batas ukuran dari sisi situs.** Server cuma diminta membuatkan
+SESI unggah ke Drive (`mulaiSesiUnggahDrive` di `src/lib/drive.ts`) — isi
+berkasnya sendiri di-PUT LANGSUNG dari peramban ke server Google, tidak
+numpang lewat fungsi serverless situs sama sekali. Ini sengaja, supaya tidak
+kebentur batas ukuran request fungsi serverless Vercel (sekitar 4,5 MB) yang
+membatasi fitur upload lain di situs ini (mis. unggah foto profil). Batasnya
+jadi murni kuota Drive & kecepatan koneksi peramban.
+
+Kolom "Atau tempel tautan Drive" di form yang sama tetap ada buat kasus lain:
+berkas yang SUDAH ADA di Drive dan tidak perlu diunggah ulang — bukan lagi
+buat mengakali batas ukuran.
+
+Lampiran cuma bisa ditambah saat catatan PERTAMA KALI dibuat — catatan yang
+sudah ada belum bisa diganti/dihapus lampirannya dari UI (kalau perlu, edit
+langsung 4 kolom `berkas_*` di spreadsheet-nya).
 
 ---
 

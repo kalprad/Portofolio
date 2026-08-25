@@ -2,15 +2,17 @@ import "server-only";
 import { JWT } from "google-auth-library";
 
 /**
- * Kredensial Google bersama untuk Drive dan Sheets.
+ * Kredensial Google bersama untuk Drive, Sheets, dan Calendar.
  *
- * Satu service account melayani keduanya: membaca berkas materi di Drive dan
- * menambah baris jejak akses di Google Sheets. Ini juga alasan kenapa
- * scope-nya diminta sekaligus di sini, bukan terpisah di masing-masing modul.
+ * Satu service account melayani semuanya: membaca & mengunggah berkas materi
+ * di Drive (Arsip publik baca saja; lampiran Catatan Ultraproduktif juga
+ * menulis — lihat `uploadDriveFile` di drive.ts), menambah baris di Google
+ * Sheets, dan sinkron dua arah ke Calendar. Ini juga alasan kenapa scope-nya
+ * diminta sekaligus di sini, bukan terpisah di masing-masing modul.
  */
 
 const SCOPES = [
-  "https://www.googleapis.com/auth/drive.readonly",
+  "https://www.googleapis.com/auth/drive",
   "https://www.googleapis.com/auth/spreadsheets",
   "https://www.googleapis.com/auth/calendar",
 ];

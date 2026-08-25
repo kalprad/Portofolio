@@ -20,6 +20,13 @@ import { googleHeaders, serviceAccountConfigured } from "@/lib/google";
  * Batas praktis mode proxy di Vercel: berkas besar (ratusan MB) memakan durasi
  * fungsi dan kuota bandwidth. Untuk berkas semacam itu, simpan sebagai folder
  * Drive dan pakai kolom `drive_folder_id` alih-alih `drive_file_id`.
+ *
+ * Fungsi-fungsi di atas semuanya baca-saja, dipakai Arsip (publik). Lampiran
+ * Catatan Ultraproduktif (privat, satu pengguna) beda pendekatan:
+ * `mulaiSesiUnggahDrive` di bawah MENULIS ke Drive lewat sesi resumable upload
+ * yang isinya di-PUT langsung oleh peramban (bukan lewat server kita), dan
+ * pratinjau/unduhnya langsung pakai iframe/tautan Drive resmi (bukan proxy)
+ * karena tidak ada pengunjung lain yang perlu disembunyikan URL-nya.
  */
 
 export type DriveMode = "proxy" | "alih";
@@ -80,6 +87,56 @@ export function publicDriveUrl(fileId: string): string {
 /** Tautan folder Drive, untuk butir arsip yang berupa folder. */
 export function driveFolderUrl(folderId: string): string {
   return `https://drive.google.com/drive/folders/${encodeURIComponent(folderId)}`;
+}
+
+/** ID folder Drive tujuan unggah lampiran Catatan Ultraproduktif. */
+export function catatanFolderId(): string | null {
+  return process.env.GOOGLE_DRIVE_CATATAN_FOLDER_ID || null;
+}
+
+/**
+ * Mulai sesi RESUMABLE UPLOAD Drive buat lampiran Catatan Ultraproduktif —
+ * kirim metadata tujuan saja (nama berkas, folder), TANPA isi berkasnya.
+ * Baliknya URL sesi yang lalu di-PUT langsung oleh PERAMBAN dengan isi
+ * berkasnya ke server Google, tidak numpang lewat server kita sama sekali.
+ *
+ * Ini kenapa ukuran berkas yang bisa diunggah TIDAK kebentur batas request
+ * fungsi serverless (Vercel keras membatasi body request di sekitar 4,5 MB) —
+ * byte-nya tidak pernah masuk ke fungsi kita, cuma request kecil ini yang
+ * masuk. URL sesinya sendiri aman dibagikan ke peramban: cuma bisa dipakai
+ * ngisi SATU berkas tujuan yang sudah ditentukan di sini, berlaku beberapa
+ * hari saja, beda dari access token penuh milik service account.
+ *
+ * Butuh scope Drive baca+tulis (lihat `google.ts`) dan folder tujuan sudah
+ * dibagikan ke alamat service account sebagai Editor.
+ */
+export async function mulaiSesiUnggahDrive(input: {
+  folderId: string;
+  fileName: string;
+  mimeType: string;
+}): Promise<string> {
+  const url = new URL("https://www.googleapis.com/upload/drive/v3/files");
+  url.searchParams.set("uploadType", "resumable");
+  url.searchParams.set("supportsAllDrives", "true");
+  url.searchParams.set("fields", "id,name,mimeType,size");
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      ...(await googleHeaders()),
+      "Content-Type": "application/json; charset=UTF-8",
+      "X-Upload-Content-Type": input.mimeType,
+    },
+    body: JSON.stringify({ name: input.fileName, parents: [input.folderId] }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Google Drive menolak permintaan sesi unggah (${res.status}): ${await res.text()}`);
+  }
+
+  const lokasi = res.headers.get("Location");
+  if (!lokasi) throw new Error("Google Drive tidak mengembalikan URL sesi unggah.");
+  return lokasi;
 }
 
 /**

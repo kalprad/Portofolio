@@ -33,7 +33,12 @@ export { workspaceSheetsConfigured, workspaceSheetUrl };
 
 export const PROYEK_KOLOM = ["id", "judul", "deskripsi", "status", "warna", "dibuat_pada", "diubah_pada", "dihapus"];
 export const TUGAS_KOLOM = ["id", "proyek_id", "judul", "deskripsi", "status", "prioritas", "tenggat", "urutan", "calendar_event_id", "calendar_diubah_pada", "dibuat_pada", "diubah_pada", "dihapus"];
-export const CATATAN_KOLOM = ["id", "proyek_id", "judul", "isi", "dibuat_pada", "diubah_pada", "dihapus"];
+export const CATATAN_KOLOM = [
+  "id", "proyek_id", "judul", "isi", "dibuat_pada", "diubah_pada", "dihapus",
+  // Kolom lampiran ditambah di ujung — `petakanBaris` memetakan by posisi,
+  // jadi baris lama yang belum punya nilai di sini tetap aman kebaca kosong.
+  "berkas_drive_id", "berkas_nama", "berkas_mime", "berkas_ukuran",
+];
 export const JADWAL_KOLOM = ["id", "proyek_id", "judul", "deskripsi", "mulai", "selesai", "lokasi", "calendar_event_id", "calendar_diubah_pada", "dibuat_pada", "diubah_pada", "dihapus"];
 export const SINKRON_KOLOM = ["kunci", "nilai"];
 
@@ -227,13 +232,20 @@ function barisKeCatatan(b: BarisMentah): WorkNote {
     proyekId: c.proyek_id,
     judul: c.judul,
     isi: c.isi ?? "",
+    berkasDriveId: teksKe(c.berkas_drive_id),
+    berkasNama: teksKe(c.berkas_nama),
+    berkasMime: teksKe(c.berkas_mime),
+    berkasUkuran: c.berkas_ukuran ? angkaKe(c.berkas_ukuran, 0) || null : null,
     dibuatPada: c.dibuat_pada,
     diubahPada: c.diubah_pada,
   };
 }
 
 function catatanKeBaris(c: WorkNote, dihapus = false): string[] {
-  return [c.id, c.proyekId, c.judul, c.isi, c.dibuatPada, c.diubahPada, dihapus ? "TRUE" : ""];
+  return [
+    c.id, c.proyekId, c.judul, c.isi, c.dibuatPada, c.diubahPada, dihapus ? "TRUE" : "",
+    c.berkasDriveId ?? "", c.berkasNama ?? "", c.berkasMime ?? "", c.berkasUkuran ? String(c.berkasUkuran) : "",
+  ];
 }
 
 async function semuaCatatanMentah(): Promise<{ baris: BarisMentah; catatan: WorkNote }[]> {
@@ -250,13 +262,25 @@ export async function listNotes(proyekId: string): Promise<WorkNote[]> {
     .sort((a, b) => b.diubahPada.localeCompare(a.diubahPada));
 }
 
-export async function createNote(input: { proyekId: string; judul: string; isi?: string }): Promise<WorkNote> {
+export async function createNote(input: {
+  proyekId: string;
+  judul: string;
+  isi?: string;
+  berkasDriveId?: string | null;
+  berkasNama?: string | null;
+  berkasMime?: string | null;
+  berkasUkuran?: number | null;
+}): Promise<WorkNote> {
   const waktu = sekarang();
   const catatan: WorkNote = {
     id: randomUUID(),
     proyekId: input.proyekId,
     judul: input.judul,
     isi: input.isi ?? "",
+    berkasDriveId: input.berkasDriveId ?? null,
+    berkasNama: input.berkasNama ?? null,
+    berkasMime: input.berkasMime ?? null,
+    berkasUkuran: input.berkasUkuran ?? null,
     dibuatPada: waktu,
     diubahPada: waktu,
   };

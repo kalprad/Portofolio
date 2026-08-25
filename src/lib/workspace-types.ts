@@ -42,6 +42,11 @@ export interface WorkNote {
   proyekId: string;
   judul: string;
   isi: string;
+  /** Lampiran opsional di Drive — semuanya null kalau catatan tidak punya berkas. */
+  berkasDriveId: string | null;
+  berkasNama: string | null;
+  berkasMime: string | null;
+  berkasUkuran: number | null;
   dibuatPada: string;
   diubahPada: string;
 }
