@@ -293,18 +293,30 @@ export async function mulaiUnggahCatatan(
   namaBerkas: string,
   mimeType: string,
 ): Promise<{ ok: true; url: string } | { ok: false; message: string }> {
-  await pastikanAdmin();
+  // Bukan `pastikanAdmin()` (yang membuang sesinya) — token Drive-nya
+  // ADA DI sesi login pemilik situs, bukan di service account. Lihat
+  // catatan di `mulaiSesiUnggahDrive`.
+  const sesi = await requireAdmin();
+  if (!sesi) return { ok: false, message: "Tidak berwenang. Masuk ulang dengan akun admin." };
 
   const folderId = catatanFolderId();
-  if (!serviceAccountConfigured() || !folderId) {
+  if (!folderId) {
     return {
       ok: false,
       message: "Unggah berkas belum disetel. Isi GOOGLE_DRIVE_CATATAN_FOLDER_ID (lihat README §10.5) dulu.",
     };
   }
 
+  if (!sesi.driveAccessToken) {
+    return {
+      ok: false,
+      message: "Sesi login lo belum punya izin Drive. Keluar lalu masuk ulang buat menyetujui izinnya.",
+    };
+  }
+
   try {
     const url = await mulaiSesiUnggahDrive({
+      accessToken: sesi.driveAccessToken,
       folderId,
       fileName: namaBerkas,
       mimeType: mimeType || "application/octet-stream",

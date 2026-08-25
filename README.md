@@ -427,33 +427,48 @@ Drive tetap, dan waktu catatannya dibuka, berkasnya bisa langsung dilihat di
 dalam halaman (iframe pratinjau resmi Drive) tanpa loncat ke Drive dulu, plus
 ada tombol unduh langsung.
 
-Beda dari §5 (Arsip, publik, sengaja menyembunyikan URL Drive dari
-pengunjung), Ultraproduktif privat — cuma Anda yang bisa buka — jadi pratinjau
-& unduhnya langsung pakai tautan Drive resmi apa adanya, bukan diproksi lewat
-server. Konsekuensinya: peramban yang dipakai buka `/ultraproduktif` perlu
-sedang login ke akun Google yang sama (atau akun itu otomatis dapat akses,
-karena jadi pemilik folder asalnya) — kalau belum, Drive akan minta login
-dulu di dalam iframe/tab unduhannya, bukan jalan buntu.
+**Upload-nya MEWAKILI PEMILIK SITUS SENDIRI, bukan service account.** Sempat
+dicoba pakai service account (§5) dulu, tapi Google menolaknya dengan galat
+`Service Accounts do not have storage quota` — service account cuma boleh
+menulis ke *Shared Drive* (fitur Google Workspace berbayar), tidak ke folder
+pribadi di akun Gmail biasa manapun, walau sudah dibagikan sebagai Editor.
+Karena akun pemilik situs biasanya akun Gmail pribadi (bukan Workspace),
+satu-satunya jalan adalah upload sebagai diri sendiri, pakai kuota Drive
+sendiri (15 GB gratis, lebih dari cukup).
+
+Konsekuensinya:
+
+1. **Perlu keluar lalu masuk ulang sekali** setelah fitur ini aktif — layar
+   izin Google bakal muncul lagi (kali ini minta izin akses Drive, scope
+   `drive.file`: cuma berkas yang DIBUAT lewat situs ini, bukan seluruh Drive
+   Anda). Tanpa ini, tombol unggah akan bilang "sesi belum punya izin Drive".
+2. **Tidak perlu lagi** membagikan folder ke alamat service account — folder
+   itu sudah milik Anda sendiri.
+3. Kalau layar izin OAuth di Google Cloud Console (§5, tempat `AUTH_GOOGLE_ID`
+   dibuat) masih berstatus **"Testing"** (belum di-*publish*), Google
+   membatalkan izin Drive itu sendiri tiap 7 hari terlepas dipakai atau
+   tidak — kalau unggahan tiba-tiba minta izin ulang lagi padahal sempat
+   jalan, itu penyebabnya. Publish app-nya di Google Cloud Console (tidak
+   perlu proses verifikasi lengkap untuk dipakai sendiri) buat menghilangkan
+   batas itu.
+
+Setup foldernya sendiri:
 
 1. Buat satu folder Drive khusus lampiran Catatan (terpisah dari folder-folder
-   materi Arsip di §5).
-2. Bagikan folder itu ke alamat service account
-   (`GOOGLE_SERVICE_ACCOUNT_EMAIL`, lihat §5) sebagai **Editor** — bukan cuma
-   Viewer, karena kali ini server yang MENULIS berkas baru ke situ.
-3. Salin ID-nya dari URL folder —
+   materi Arsip di §5) — folder pribadi biasa, tidak perlu dibagikan ke siapa
+   pun.
+2. Salin ID-nya dari URL folder —
    `drive.google.com/drive/folders/<ID-NYA>` — isi `GOOGLE_DRIVE_CATATAN_FOLDER_ID`.
 
-**Tidak ada batas ukuran dari sisi situs.** Server cuma diminta membuatkan
-SESI unggah ke Drive (`mulaiSesiUnggahDrive` di `src/lib/drive.ts`) — isi
-berkasnya sendiri di-PUT LANGSUNG dari peramban ke server Google, tidak
-numpang lewat fungsi serverless situs sama sekali. Ini sengaja, supaya tidak
-kebentur batas ukuran request fungsi serverless Vercel (sekitar 4,5 MB) yang
-membatasi fitur upload lain di situs ini (mis. unggah foto profil). Batasnya
-jadi murni kuota Drive & kecepatan koneksi peramban.
+**Tidak ada batas ukuran dari sisi situs.** Isi berkasnya diteruskan sebagai
+STREAM lewat satu route relai (`/api/ultraproduktif/catatan/unggah`, Edge
+runtime) — tidak pernah ditampung penuh ke memori — jadi tidak kebentur batas
+ukuran request fungsi serverless Vercel (sekitar 4,5 MB) yang membatasi
+fitur upload lain di situs ini (mis. unggah foto profil). Batasnya jadi
+murni kuota Drive & kecepatan koneksi peramban.
 
 Kolom "Atau tempel tautan Drive" di form yang sama tetap ada buat kasus lain:
-berkas yang SUDAH ADA di Drive dan tidak perlu diunggah ulang — bukan lagi
-buat mengakali batas ukuran.
+berkas yang SUDAH ADA di Drive dan tidak perlu diunggah ulang.
 
 Lampiran cuma bisa ditambah saat catatan PERTAMA KALI dibuat — catatan yang
 sudah ada belum bisa diganti/dihapus lampirannya dari UI (kalau perlu, edit

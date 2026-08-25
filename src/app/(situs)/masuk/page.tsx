@@ -45,6 +45,11 @@ export default async function Masuk({
   // Tujuan hanya diterima kalau berupa lintasan internal — mencegah situs ini
   // dipakai sebagai batu loncatan ke alamat luar.
   const tujuanAman = tujuan?.startsWith("/") && !tujuan.startsWith("//") ? tujuan : "/";
+  // Login ke area ini juga meminta izin Drive (drive.file) buat lampiran
+  // Catatan — lihat auth.ts. Disclaimer di bawah harus jujur soal ini, jadi
+  // beda teks tergantung tujuannya (mayoritas pengunjung, mahasiswa UGM
+  // menuju arsip, tidak pernah kena minta izin Drive sama sekali).
+  const tujuanAdmin = tujuanAman.startsWith("/admin") || tujuanAman.startsWith("/ultraproduktif");
 
   return (
     <Container size="narrow">
@@ -114,8 +119,19 @@ export default async function Masuk({
         <p className="mt-10 flex items-start gap-2 text-xs text-subtle">
           <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           <span>
-            Situs ini hanya membaca nama dan alamat email dari akun Google Anda.
-            Tidak ada akses ke Drive, surel, maupun kontak.{" "}
+            {tujuanAdmin ? (
+              <>
+                Situs ini membaca nama dan alamat email dari akun Google Anda, dan —
+                khusus login ke area ini — juga meminta izin membuat berkas di Drive
+                (dipakai lampiran Catatan Ultraproduktif). Izin itu terbatas pada
+                berkas yang dibuat lewat situs ini saja, tidak ke seluruh Drive Anda.
+              </>
+            ) : (
+              <>
+                Situs ini hanya membaca nama dan alamat email dari akun Google Anda.
+                Tidak ada akses ke Drive, surel, maupun kontak.
+              </>
+            )}{" "}
             <Link href="/" className="link-underline">
               Kembali ke beranda
             </Link>

@@ -21,12 +21,17 @@ import { googleHeaders, serviceAccountConfigured } from "@/lib/google";
  * fungsi dan kuota bandwidth. Untuk berkas semacam itu, simpan sebagai folder
  * Drive dan pakai kolom `drive_folder_id` alih-alih `drive_file_id`.
  *
- * Fungsi-fungsi di atas semuanya baca-saja, dipakai Arsip (publik). Lampiran
- * Catatan Ultraproduktif (privat, satu pengguna) beda pendekatan:
- * `mulaiSesiUnggahDrive` di bawah MENULIS ke Drive lewat sesi resumable upload
- * yang isinya di-PUT langsung oleh peramban (bukan lewat server kita), dan
- * pratinjau/unduhnya langsung pakai iframe/tautan Drive resmi (bukan proxy)
- * karena tidak ada pengunjung lain yang perlu disembunyikan URL-nya.
+ * Fungsi-fungsi di atas semuanya baca-saja lewat service account, dipakai
+ * Arsip (publik). Lampiran Catatan Ultraproduktif (privat, satu pengguna)
+ * beda pendekatan dua kali lipat: `mulaiSesiUnggahDrive` di bawah MENULIS ke
+ * Drive, TAPI pakai token OAuth pemilik situs sendiri (bukan service
+ * account — service account tidak punya kuota penyimpanan di Drive pribadi
+ * manapun, cuma bisa nulis ke Shared Drive yang butuh Google Workspace
+ * berbayar). Isinya diteruskan lewat relai `/api/ultraproduktif/catatan/unggah`
+ * milik server kita sendiri (bukan di-PUT langsung dari peramban ke Drive —
+ * Drive tidak mengizinkan CORS buat itu). Pratinjau/unduhnya baru balik pakai
+ * iframe/tautan Drive resmi langsung (bukan proxy) karena tidak ada
+ * pengunjung lain yang perlu disembunyikan URL-nya.
  */
 
 export type DriveMode = "proxy" | "alih";
@@ -97,33 +102,35 @@ export function catatanFolderId(): string | null {
 /**
  * Mulai sesi RESUMABLE UPLOAD Drive buat lampiran Catatan Ultraproduktif —
  * kirim metadata tujuan saja (nama berkas, folder), TANPA isi berkasnya.
- * Baliknya URL sesi yang lalu di-PUT langsung oleh PERAMBAN dengan isi
- * berkasnya ke server Google, tidak numpang lewat server kita sama sekali.
+ * Baliknya URL sesi yang lalu di-PUT lewat relai `/api/ultraproduktif/catatan/unggah`
+ * (bukan langsung dari peramban — Drive tidak mengizinkan CORS buat itu).
  *
  * Ini kenapa ukuran berkas yang bisa diunggah TIDAK kebentur batas request
  * fungsi serverless (Vercel keras membatasi body request di sekitar 4,5 MB) —
- * byte-nya tidak pernah masuk ke fungsi kita, cuma request kecil ini yang
- * masuk. URL sesinya sendiri aman dibagikan ke peramban: cuma bisa dipakai
- * ngisi SATU berkas tujuan yang sudah ditentukan di sini, berlaku beberapa
- * hari saja, beda dari access token penuh milik service account.
+ * byte-nya diteruskan sebagai stream, tidak pernah ditampung penuh di memori.
  *
- * Butuh scope Drive baca+tulis (lihat `google.ts`) dan folder tujuan sudah
- * dibagikan ke alamat service account sebagai Editor.
+ * PAKAI TOKEN OAuth PEMILIK SITUS SENDIRI (`accessToken`, dari sesi login-nya
+ * — lihat `session.driveAccessToken` di `auth.ts`), BUKAN token service
+ * account seperti fungsi lain di modul ini. Alasannya: service account tidak
+ * punya kuota penyimpanan Drive di folder pribadi manapun (`Service Accounts
+ * do not have storage quota` — cuma bisa nulis ke Shared Drive, fitur
+ * Workspace berbayar yang tidak tersedia buat akun Gmail biasa). Upload
+ * mewakili pemilik situs sendiri memakai kuota Drive miliknya.
  */
 export async function mulaiSesiUnggahDrive(input: {
+  accessToken: string;
   folderId: string;
   fileName: string;
   mimeType: string;
 }): Promise<string> {
   const url = new URL("https://www.googleapis.com/upload/drive/v3/files");
   url.searchParams.set("uploadType", "resumable");
-  url.searchParams.set("supportsAllDrives", "true");
   url.searchParams.set("fields", "id,name,mimeType,size");
 
   const res = await fetch(url, {
     method: "POST",
     headers: {
-      ...(await googleHeaders()),
+      Authorization: `Bearer ${input.accessToken}`,
       "Content-Type": "application/json; charset=UTF-8",
       "X-Upload-Content-Type": input.mimeType,
     },

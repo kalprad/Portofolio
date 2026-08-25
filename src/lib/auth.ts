@@ -23,6 +23,66 @@ declare module "next-auth" {
       isAdmin: boolean;
       isUgm: boolean;
     } & DefaultSession["user"];
+    /**
+     * Access token Drive milik PEMILIK SITUS sendiri (bukan service account) —
+     * dipakai lampiran Catatan Ultraproduktif, karena service account tidak
+     * punya kuota penyimpanan di Drive pribadi (lihat komentar di provider
+     * Google di bawah). `null` kalau sesi ini belum pernah menyetujui izin
+     * Drive (mis. login dari sebelum fitur ini ada) — logout+masuk ulang
+     * buat memicu layar izin baru.
+     */
+    driveAccessToken: string | null;
+  }
+}
+
+/** Bentuk field tambahan yang dititipkan di JWT — lihat callback `jwt` di bawah. */
+interface DriveTokenClaims {
+  driveAccessToken?: string;
+  driveRefreshToken?: string;
+  /** Unix seconds. */
+  driveExpiresAt?: number;
+}
+
+/**
+ * Access token Google kadaluwarsa dalam ~1 jam — sesi situs ini bertahan 30
+ * hari, jadi HARUS diperpanjang berkali-kali pakai refresh token.
+ *
+ * Catatan: kalau layar izin OAuth di Google Cloud Console masih berstatus
+ * "Testing" (belum di-publish), Google membatalkan refresh token itu sendiri
+ * tiap 7 hari terlepas dari dipakai atau tidak — kalau tiba-tiba unggahan
+ * gagal lagi dengan galat izin setelah sempat jalan, itu penyebabnya, bukan
+ * bug di sini. Publish app-nya (tidak perlu proses verifikasi lengkap untuk
+ * pemakaian sendiri) buat menghilangkan batas itu.
+ */
+async function segarkanTokenDrive(token: DriveTokenClaims): Promise<DriveTokenClaims> {
+  if (!token.driveRefreshToken) return token;
+
+  try {
+    const res = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: process.env.AUTH_GOOGLE_ID ?? "",
+        client_secret: process.env.AUTH_GOOGLE_SECRET ?? "",
+        grant_type: "refresh_token",
+        refresh_token: token.driveRefreshToken,
+      }),
+    });
+    const data = (await res.json()) as { access_token?: string; expires_in?: number; refresh_token?: string; error?: string };
+    if (!res.ok || !data.access_token) throw new Error(data.error ?? `status ${res.status}`);
+
+    return {
+      ...token,
+      driveAccessToken: data.access_token,
+      driveExpiresAt: Math.floor(Date.now() / 1000) + (data.expires_in ?? 3600),
+      driveRefreshToken: data.refresh_token ?? token.driveRefreshToken,
+    };
+  } catch (err) {
+    console.error("[auth] gagal menyegarkan token Drive:", err);
+    // Biarkan token lama (kadaluwarsa) apa adanya — lebih baik unggahan gagal
+    // dengan galat yang jelas daripada sesi login utuh ikut rusak gara-gara
+    // ini.
+    return token;
   }
 }
 
@@ -67,6 +127,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       // `prompt: select_account` supaya pengguna dengan beberapa akun Google
       // (pribadi + UGM) bisa memilih, bukan langsung dipakaikan yang terakhir.
+      //
+      // Ini scope BAWAAN — cuma nama & email, sesuai janji di halaman /masuk
+      // ("tidak ada akses ke Drive"). Scope Drive (`drive.file`, buat lampiran
+      // Catatan Ultraproduktif) TIDAK dipasang statis di sini — kalau dipasang
+      // di sini, SEMUA pengunjung (termasuk mahasiswa UGM yang cuma mau buka
+      // arsip) bakal disodori layar izin Drive yang tidak relevan buat
+      // mereka, dan janji "tidak ada akses ke Drive" di /masuk jadi bohong.
+      // Sebagai gantinya, scope tambahan itu diminta per-panggilan lewat
+      // parameter ketiga `signIn()` di `masukDenganGoogle` — HANYA kalau
+      // tujuan login-nya area admin/Ultraproduktif.
       authorization: { params: { prompt: "select_account" } },
     }),
   ],
@@ -82,17 +152,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (profile && profile.email_verified === false) return false;
       return true;
     },
-    async jwt({ token }) {
+    async jwt({ token, account }) {
       // Peran ikut dititipkan di token supaya sesi tidak perlu menyentuh
       // database di setiap permintaan.
       (token as Record<string, unknown>).role = resolveRole(token.email);
-      return token;
+
+      let klaim = token as DriveTokenClaims;
+      if (account?.access_token) {
+        // Baru saja masuk — Google cuma mengirim token OAuth di langkah ini.
+        klaim = {
+          ...klaim,
+          driveAccessToken: account.access_token,
+          driveRefreshToken: account.refresh_token ?? klaim.driveRefreshToken,
+          driveExpiresAt: account.expires_at,
+        };
+      } else if (klaim.driveExpiresAt && Date.now() >= klaim.driveExpiresAt * 1000 - 60_000) {
+        klaim = { ...klaim, ...(await segarkanTokenDrive(klaim)) };
+      }
+
+      return { ...token, ...klaim };
     },
     async session({ session, token }) {
       const role = ((token as Record<string, unknown>).role ?? "tamu") as Role;
       session.user.role = role;
       session.user.isAdmin = role === "admin";
       session.user.isUgm = role === "ugm" || role === "admin";
+      session.driveAccessToken = (token as DriveTokenClaims).driveAccessToken ?? null;
       return session;
     },
   },
