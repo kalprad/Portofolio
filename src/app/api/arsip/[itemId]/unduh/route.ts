@@ -95,7 +95,10 @@ export async function GET(
         { status: 409 },
       );
     }
-    return NextResponse.redirect(target, { status: 302 });
+    // `target` boleh berupa path relatif (mis. berkas statis di /public), jadi
+    // selalu dibangun jadi URL absolut — NextResponse.redirect menolak string
+    // relatif tanpa base dan bakal melempar galat 500.
+    return NextResponse.redirect(new URL(target, request.nextUrl.origin), { status: 302 });
   }
 
   // Mode alih: tanpa service account, server hanya bisa mengarahkan.
