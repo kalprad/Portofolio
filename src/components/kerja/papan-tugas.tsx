@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Loader2, Plus, Trash2, X } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, Plus, Trash2, X } from "lucide-react";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui/primitives";
 import { hapusTugasAksi, perbaruiTugas, pindahkanTugas, tambahTugasCepat } from "@/lib/workspace-actions";
 import { FORM_STATE_AWAL } from "@/lib/form-state";
@@ -105,12 +105,18 @@ function KartuTugas({
   terbuka,
   onKlik,
   onDragStart,
+  onGeser,
+  bisaMundur,
+  bisaMaju,
 }: {
   tugas: WorkTask;
   proyekId: string;
   terbuka: boolean;
   onKlik: () => void;
   onDragStart: (e: React.DragEvent) => void;
+  onGeser: (arah: -1 | 1) => void;
+  bisaMundur: boolean;
+  bisaMaju: boolean;
 }) {
   const lewat = sudahLewat(tugas.tenggat);
 
@@ -119,24 +125,47 @@ function KartuTugas({
   }
 
   return (
-    <button
-      type="button"
+    <div
       draggable
       onDragStart={onDragStart}
-      onClick={onKlik}
-      className="flex w-full cursor-grab flex-col gap-2 rounded border border-border bg-surface p-3 text-left transition-colors duration-200 hover:border-border-strong active:cursor-grabbing"
+      className="flex cursor-grab flex-col gap-2 rounded border border-border bg-surface p-3 transition-colors duration-200 hover:border-border-strong active:cursor-grabbing"
     >
-      <div className="flex items-start gap-2">
-        <span className={cn("mt-1.5 size-1.5 shrink-0 rounded-full", PRIORITAS_WARNA[tugas.prioritas])} aria-hidden />
-        <p className="text-sm font-medium">{tugas.judul}</p>
+      <button type="button" onClick={onKlik} className="flex w-full flex-col gap-2 text-left">
+        <div className="flex items-start gap-2">
+          <span className={cn("mt-1.5 size-1.5 shrink-0 rounded-full", PRIORITAS_WARNA[tugas.prioritas])} aria-hidden />
+          <p className="text-sm font-medium">{tugas.judul}</p>
+        </div>
+        {tugas.tenggat ? (
+          <p className={cn("flex items-center gap-1 pl-3.5 text-xs", lewat ? "font-medium text-destructive" : "text-muted-foreground")}>
+            {lewat ? <AlertTriangle className="size-3" aria-hidden /> : null}
+            {formatWaktuLokal(tugas.tenggat)}
+          </p>
+        ) : null}
+      </button>
+
+      {/* Alternatif drag buat sentuhan — HTML5 drag-and-drop tidak punya event
+          sentuh sama sekali, jadi tanpa ini tugas tidak bisa dipindah status di HP. */}
+      <div className="flex items-center justify-end gap-1 border-t border-border pt-2">
+        <button
+          type="button"
+          disabled={!bisaMundur}
+          onClick={() => onGeser(-1)}
+          aria-label="Pindah ke status sebelumnya"
+          className="flex size-8 items-center justify-center rounded text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+        >
+          <ChevronLeft className="size-4" aria-hidden />
+        </button>
+        <button
+          type="button"
+          disabled={!bisaMaju}
+          onClick={() => onGeser(1)}
+          aria-label="Pindah ke status berikutnya"
+          className="flex size-8 items-center justify-center rounded text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+        >
+          <ChevronRight className="size-4" aria-hidden />
+        </button>
       </div>
-      {tugas.tenggat ? (
-        <p className={cn("flex items-center gap-1 pl-3.5 text-xs", lewat ? "font-medium text-destructive" : "text-muted-foreground")}>
-          {lewat ? <AlertTriangle className="size-3" aria-hidden /> : null}
-          {formatWaktuLokal(tugas.tenggat)}
-        </p>
-      ) : null}
-    </button>
+    </div>
   );
 }
 
@@ -204,7 +233,7 @@ export function PapanTugas({ proyekId, tugasAwal }: { proyekId: string; tugasAwa
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {TASK_STATUS_ORDER.map((status) => {
+      {TASK_STATUS_ORDER.map((status, indeksStatus) => {
         const kolom = tugas.filter((t) => t.status === status).sort((a, b) => a.urutan - b.urutan);
         return (
           <div
@@ -231,6 +260,12 @@ export function PapanTugas({ proyekId, tugasAwal }: { proyekId: string; tugasAwa
                   terbuka={terbukaId === t.id}
                   onKlik={() => setTerbukaId((cur) => (cur === t.id ? null : t.id))}
                   onDragStart={(e) => e.dataTransfer.setData("text/plain", t.id)}
+                  onGeser={(arah) => {
+                    const tujuan = TASK_STATUS_ORDER[indeksStatus + arah];
+                    if (tujuan) pindah(t.id, tujuan);
+                  }}
+                  bisaMundur={indeksStatus > 0}
+                  bisaMaju={indeksStatus < TASK_STATUS_ORDER.length - 1}
                 />
               ))}
             </div>

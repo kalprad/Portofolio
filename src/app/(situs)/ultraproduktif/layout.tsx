@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { KerjaSidebar } from "@/components/kerja/kerja-sidebar";
+import { KerjaBottomNav } from "@/components/kerja/kerja-bottom-nav";
+import { QuickAddSheet } from "@/components/kerja/quick-add-sheet";
 import { listProjects, workspaceSheetsConfigured } from "@/lib/workspace-sheets";
 
 export const metadata: Metadata = {
@@ -7,6 +9,17 @@ export const metadata: Metadata = {
   // Privat — cuma pemilik situs yang bisa membuka (dijaga middleware), tapi
   // tetap tidak perlu masuk indeks mesin pencari.
   robots: { index: false, follow: false },
+  // Manifest & ikon di-scope ke /ultraproduktif saja (lewat metadata
+  // per-segmen Next.js) — situs portofolio publik tidak ikut jadi "app".
+  manifest: "/manifest-ultraproduktif.json",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Ultraproduktif" },
+  icons: {
+    icon: [
+      { url: "/icons/ultraproduktif-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/ultraproduktif-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/icons/ultraproduktif-apple-touch.png",
+  },
 };
 
 // Halaman ini bergantung pada Google Sheets/Calendar yang bisa gagal (kunci
@@ -25,7 +38,10 @@ export default async function KerjaLayout({ children }: { children: React.ReactN
       <aside className="lg:sticky lg:top-8 lg:self-start">
         <KerjaSidebar proyek={proyek} />
       </aside>
-      <div className="min-w-0">{children}</div>
+      <div className="min-w-0 pb-[calc(76px+env(safe-area-inset-bottom))] lg:pb-0">{children}</div>
+
+      <KerjaBottomNav proyek={proyek} />
+      <QuickAddSheet proyek={proyek} />
     </div>
   );
 }

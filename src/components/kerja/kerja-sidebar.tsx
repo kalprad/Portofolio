@@ -17,7 +17,7 @@ export function KerjaSidebar({ proyek }: { proyek: WorkProject[] }) {
   const aktif = proyek.filter((p) => p.status !== "arsip");
 
   return (
-    <nav aria-label="Navigasi Ultraproduktif" className="flex flex-col gap-6">
+    <nav aria-label="Navigasi Ultraproduktif" className="hidden flex-col gap-6 lg:flex">
       <ul className="flex flex-col gap-0.5">
         <li>
           <Link
