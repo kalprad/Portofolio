@@ -31,6 +31,10 @@ export function HeaderNav({
   const pathname = usePathname();
   const [terbuka, setTerbuka] = useState(false);
   const tautan = isAdmin ? [...TAUTAN, ...TAUTAN_ADMIN] : TAUTAN;
+  // Bawa halaman yang lagi dibuka sebagai tujuan — supaya kalau perlu login
+  // ulang (mis. Ultraproduktif butuh persetujuan izin Drive baru), tombol
+  // "Masuk" ini tidak "lupa" dan malah membawa balik ke beranda begitu saja.
+  const hrefMasuk = `/masuk?tujuan=${encodeURIComponent(pathname)}`;
 
   // Menu mobile ditutup setiap kali rute berubah — tombol kembali peramban
   // tidak boleh meninggalkan panel yang menggantung terbuka.
@@ -92,7 +96,7 @@ export function HeaderNav({
               </Link>
             ) : !sudahMasuk ? (
               <Link
-                href="/masuk"
+                href={hrefMasuk}
                 className="hidden min-h-[40px] items-center gap-2 rounded px-3 text-sm text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground md:inline-flex"
               >
                 <LogIn className="size-4" aria-hidden />
@@ -139,7 +143,7 @@ export function HeaderNav({
               ))}
               <li>
                 <Link
-                  href={isAdmin ? "/admin" : "/masuk"}
+                  href={isAdmin ? "/admin" : hrefMasuk}
                   className="flex min-h-[52px] items-center gap-2 text-base text-muted-foreground"
                 >
                   {isAdmin ? (
