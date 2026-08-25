@@ -184,7 +184,11 @@ function CatatanBaruForm({ proyekId, onSelesai }: { proyekId: string; onSelesai:
         try {
           hasilUnggah = await fetch("/api/ultraproduktif/catatan/unggah", {
             method: "POST",
-            headers: { "X-Sesi-Url": sesi.url, "Content-Type": berkas.type || "application/octet-stream" },
+            headers: {
+              "X-Sesi-Url": sesi.url,
+              "X-Berkas-Ukuran": String(berkas.size),
+              "Content-Type": berkas.type || "application/octet-stream",
+            },
             body: berkas,
           });
         } catch {
@@ -194,7 +198,10 @@ function CatatanBaruForm({ proyekId, onSelesai }: { proyekId: string; onSelesai:
         }
         if (!hasilUnggah.ok) {
           setStatus(null);
-          setPesan("Google Drive menolak unggahan. Coba lagi.");
+          // Tampilkan alasan asli dari Drive (bukan cuma "coba lagi") supaya
+          // galat berikutnya, kalau ada, langsung ketahuan penyebabnya.
+          const detail = await hasilUnggah.text().catch(() => "");
+          setPesan(`Google Drive menolak unggahan (${hasilUnggah.status}).${detail ? ` ${detail.slice(0, 200)}` : ""}`);
           return;
         }
 

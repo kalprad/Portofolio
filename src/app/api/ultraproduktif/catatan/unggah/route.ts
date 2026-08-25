@@ -48,10 +48,18 @@ export async function POST(request: NextRequest) {
   // "potongan" berkasnya sekaligus (bukan resumable bertahap sungguhan).
   // "Content-Range" adalah cara resmi Drive buat bilang "ini potongan
   // terakhir, totalnya segini" tanpa header itu.
+  //
+  // Ukurannya diambil dari header kiriman klien (`X-Berkas-Ukuran`, isinya
+  // `berkas.size` yang klien SUDAH TAHU sebelum kirim), bukan dari
+  // "content-length" request masuk — di produksi (HTTP/2 lewat jaringan edge
+  // Vercel) header itu kerap tidak ada sama sekali walau isinya tetap
+  // determinate, beda dari server dev lokal yang selalu menyertakannya.
+  // Tanpa Content-Range yang benar, Drive tidak tahu ini potongan terakhir
+  // dan menolak unggahannya.
   const headers: Record<string, string> = {
     "Content-Type": request.headers.get("content-type") ?? "application/octet-stream",
   };
-  const total = Number(request.headers.get("content-length"));
+  const total = Number(request.headers.get("x-berkas-ukuran"));
   if (Number.isFinite(total) && total > 0) {
     headers["Content-Range"] = `bytes 0-${total - 1}/${total}`;
   }
