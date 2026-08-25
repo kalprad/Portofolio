@@ -1,0 +1,31 @@
+{
+  "title_id": "SOP + Damper (Kinerja Seismik)",
+  "title_en": null,
+  "description_id": "Materi dasar riset tentang kinerja seismik SOP dan damper.",
+  "description_en": null,
+  "level": "penelitian",
+  "semester": null,
+  "course_code": null,
+  "credits": null,
+  "lecturer": null,
+  "cover_image_url": null,
+  "sort_order": 1,
+  "is_published": true,
+  "items": [
+    {
+      "id": "materi-dasar",
+      "title_id": "Materi Dasar — Seismic Performance SOP + Damper",
+      "title_en": null,
+      "description_id": "Rangkuman materi dasar riset seismic performance SOP dan damper.",
+      "kind": "catatan",
+      "drive_file_id": null,
+      "drive_folder_id": null,
+      "external_url": "/arsip/materi-dasar-riset-sop-damper.html",
+      "file_size_bytes": 139320,
+      "mime_type": "text/html",
+      "access_level": "public",
+      "sort_order": 1,
+      "is_published": true
+    }
+  ]
+}

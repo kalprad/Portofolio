@@ -7,7 +7,7 @@
 
 export type PublishStatus = "draft" | "published";
 export type PostVisibility = "private" | "unlisted" | "public";
-export type StudyLevel = "s1" | "s2" | "umum";
+export type StudyLevel = "s1" | "s2" | "umum" | "penelitian";
 export type ArchiveAccess = "public" | "ugm";
 export type CvSection =
   | "pendidikan" | "pengalaman" | "publikasi" | "penghargaan"
@@ -181,6 +181,7 @@ export const LEVEL_LABEL: Record<StudyLevel, string> = {
   s1: "S1",
   s2: "S2",
   umum: "Umum",
+  penelitian: "Penelitian",
 };
 
 export const VISIBILITY_LABEL: Record<PostVisibility, string> = {

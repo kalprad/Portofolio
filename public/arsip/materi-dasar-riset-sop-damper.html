@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Materi Dasar — Seismic Performance SOP + Damper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1F35;
+    --bg-panel:#153055;
+    --bg-panel-2:#1B3A66;
+    --bg-card:#122A4A;
+    --line:#5B9BD5;
+    --line-dim:#33557C;
+    --grid: rgba(91,155,213,0.07);
+    --text:#EAF2F8;
+    --text-dim:#9FB8CE;
+    --text-faint:#6C88A6;
+    --amber:#E8A33D;
+    --gold:#F2C879;
+    --violet:#A796F5;
+    --ok:#7FD4A8;
+    --tag-conf:#E8A33D;
+    --tag-skripsi:#5B9BD5;
+    --tag-tesis:#A796F5;
+    --font-display:'Space Grotesk', ui-sans-serif, sans-serif;
+    --font-body:'IBM Plex Sans', ui-sans-serif, sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/40px 40px,
+      var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    line-height:1.6;
+    font-size:15.5px;
+  }
+  a{color:var(--line);}
+  ::selection{background:var(--amber); color:#1a1a1a;}
+
+  /* ---------- layout ---------- */
+  .app{display:flex; min-height:100vh;}
+  .sidebar{
+    position:fixed; top:0; left:0; bottom:0; width:288px;
+    background:var(--bg-panel);
+    border-right:1px solid var(--line-dim);
+    padding:22px 18px 18px;
+    overflow-y:auto;
+    display:flex; flex-direction:column; gap:16px;
+    z-index:20;
+  }
+  .brand{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    border:1px dashed var(--line-dim);
+    padding:8px 10px;
+  }
+  .brand b{color:var(--gold); display:block; font-size:12px; letter-spacing:.06em;}
+  .search-box{
+    display:flex; align-items:center; gap:6px;
+    background:var(--bg-panel-2);
+    border:1px solid var(--line-dim);
+    padding:8px 10px;
+  }
+  .search-box input{
+    background:transparent; border:none; outline:none;
+    color:var(--text); font-family:var(--font-body); font-size:13.5px; width:100%;
+  }
+  .search-box input::placeholder{color:var(--text-faint);}
+  .search-box svg{flex:none; opacity:.6;}
+  nav.toc{display:flex; flex-direction:column; gap:2px;}
+  nav.toc a{
+    display:flex; align-items:baseline; gap:8px;
+    text-decoration:none; color:var(--text-dim);
+    font-size:13.5px; padding:7px 8px;
+    border-left:2px solid transparent;
+    transition:background .15s, color .15s, border-color .15s;
+  }
+  nav.toc a .letter{
+    font-family:var(--font-mono); color:var(--gold); font-weight:600; font-size:12.5px;
+    width:16px; flex:none;
+  }
+  nav.toc a:hover{background:var(--bg-panel-2); color:var(--text);}
+  nav.toc a.active{border-left-color:var(--line); background:var(--bg-panel-2); color:var(--text);}
+
+  .legend{
+    font-family:var(--font-mono); font-size:11px; color:var(--text-faint);
+    border-top:1px solid var(--line-dim); padding-top:12px;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .legend .row{display:flex; align-items:center; gap:8px;}
+  .dot{width:9px; height:9px; border-radius:50%; flex:none;}
+  .progress{
+    margin-top:auto; font-family:var(--font-mono); font-size:11.5px; color:var(--text-faint);
+    border-top:1px solid var(--line-dim); padding-top:12px;
+  }
+  .progress b{color:var(--ok);}
+  .toggle-all{
+    display:flex; gap:8px; margin-top:6px;
+  }
+  .toggle-all button{
+    flex:1; background:var(--bg-panel-2); border:1px solid var(--line-dim); color:var(--text-dim);
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:.05em; text-transform:uppercase;
+    padding:7px 4px; cursor:pointer;
+  }
+  .toggle-all button:hover{border-color:var(--line); color:var(--text);}
+
+  main{
+    margin-left:288px; flex:1; min-width:0;
+    padding:0 0 80px;
+  }
+  .wrap{max-width:840px; margin:0 auto; padding:0 40px;}
+
+  /* ---------- hero (title block) ---------- */
+  .hero{border-bottom:1px solid var(--line-dim); padding:56px 0 30px;}
+  .hero .kicker{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--amber); margin-bottom:14px;
+  }
+  .hero h1{
+    font-family:var(--font-display); font-size:34px; line-height:1.15; margin:0 0 14px; font-weight:700;
+  }
+  .hero p{color:var(--text-dim); max-width:620px; margin:0 0 22px;}
+  .titleblock{
+    display:grid; grid-template-columns:repeat(4,1fr);
+    border:1px solid var(--line-dim); font-family:var(--font-mono); font-size:11.5px;
+  }
+  .titleblock div{padding:9px 12px; border-right:1px solid var(--line-dim);}
+  .titleblock div:last-child{border-right:none;}
+  .titleblock span{display:block; color:var(--text-faint); font-size:9.5px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px;}
+  .titleblock strong{color:var(--gold); font-weight:600;}
+
+  /* ---------- topic section ---------- */
+  .topic{padding:52px 0 8px; border-bottom:1px solid var(--line-dim);}
+  .topic:last-of-type{border-bottom:none;}
+  .topic-header{display:flex; gap:18px; align-items:flex-start; margin-bottom:8px;}
+  .topic-letter{
+    font-family:var(--font-display); font-size:40px; font-weight:700; color:var(--line);
+    line-height:1; flex:none;
+    border:1px solid var(--line-dim); padding:8px 14px; background:var(--bg-panel);
+  }
+  .topic-title h2{font-family:var(--font-display); font-size:23px; margin:0 0 6px; font-weight:600;}
+  .topic-title p.desc{color:var(--text-dim); margin:0; font-size:14px; max-width:600px;}
+  .topic-meta{
+    font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint);
+    margin:14px 0 22px; padding:10px 12px; border:1px dashed var(--line-dim);
+    display:flex; flex-wrap:wrap; gap:14px;
+  }
+  .topic-meta b{color:var(--text-dim); font-weight:600;}
+
+  /* ---------- accordion (native details) ---------- */
+  details.subtopic{
+    border:1px solid var(--line-dim);
+    background:var(--bg-card);
+    margin-bottom:12px;
+  }
+  details.subtopic[open]{border-color:var(--line);}
+  summary.subtopic-head{
+    list-style:none; cursor:pointer;
+    display:flex; align-items:center; gap:12px;
+    padding:14px 16px;
+    font-family:var(--font-display); font-weight:600; font-size:15.5px;
+    user-select:none;
+  }
+  summary.subtopic-head::-webkit-details-marker{display:none;}
+  summary.subtopic-head::before{
+    content:"+"; font-family:var(--font-mono); color:var(--line); font-size:16px; width:14px; flex:none;
+  }
+  details[open] summary.subtopic-head::before{content:"–";}
+  .subtopic-tags{display:flex; gap:5px; margin-left:auto; flex:none;}
+  .tag{
+    font-family:var(--font-mono); font-size:9.5px; padding:3px 7px; border-radius:3px; color:#0E1F35; font-weight:600;
+    letter-spacing:.02em; white-space:nowrap;
+  }
+  .tag.conf{background:var(--tag-conf);}
+  .tag.skripsi{background:var(--tag-skripsi);}
+  .tag.tesis{background:var(--tag-tesis);}
+  .read-check{flex:none; display:flex; align-items:center; margin-left:8px;}
+  .read-check input{width:15px; height:15px; accent-color:var(--ok); cursor:pointer;}
+
+  .subtopic-body{padding:0 18px 20px 42px; font-size:14.5px; color:var(--text);}
+  .subtopic-body h4{
+    font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--amber); margin:20px 0 8px;
+  }
+  .subtopic-body p{color:var(--text); margin:0 0 10px;}
+  .subtopic-body ul, .subtopic-body ol{margin:0 0 10px; padding-left:20px; color:var(--text);}
+  .subtopic-body li{margin-bottom:5px;}
+
+  .formula{
+    background:var(--bg-panel); border:1px solid var(--line-dim); border-left:3px solid var(--gold);
+    padding:14px 16px; margin:10px 0; overflow-x:auto;
+  }
+  .formula .eq{font-family:var(--font-mono); font-size:14.5px; color:var(--gold); white-space:nowrap;}
+  .formula .eq + .eq{margin-top:8px;}
+  .formula .legend-list{margin-top:10px; font-family:var(--font-mono); font-size:11.5px; color:var(--text-dim);}
+  .formula .legend-list div{margin-bottom:3px;}
+  .formula .legend-list b{color:var(--text); font-weight:600;}
+
+  .codemap{
+    background:#0A1830; border:1px solid var(--line-dim);
+    padding:12px 14px; margin:10px 0; font-family:var(--font-mono); font-size:12.5px; color:var(--line);
+    overflow-x:auto; white-space:pre;
+  }
+  .codemap .cm-label{
+    display:block; font-family:var(--font-body); font-size:10.5px; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--text-faint); margin-bottom:6px; white-space:normal;
+  }
+
+  table.datatable{width:100%; border-collapse:collapse; margin:10px 0; font-size:13px;}
+  table.datatable th, table.datatable td{border:1px solid var(--line-dim); padding:6px 9px; text-align:left;}
+  table.datatable th{background:var(--bg-panel); color:var(--gold); font-family:var(--font-mono); font-size:11px; text-transform:uppercase;}
+  table.datatable td{color:var(--text-dim);}
+
+  .callout{
+    background:var(--bg-panel-2); border-left:3px solid var(--line); padding:12px 14px; margin:14px 0;
+    font-size:13.5px; color:var(--text-dim);
+  }
+  .callout b{color:var(--text);}
+
+  .source{
+    margin-top:12px; font-family:var(--font-mono); font-size:11px; color:var(--text-faint);
+    border-top:1px dashed var(--line-dim); padding-top:8px;
+  }
+  .source b{color:var(--line);}
+
+  .diagram{
+    background:var(--bg-panel); border:1px solid var(--line-dim);
+    padding:16px; margin:14px 0; overflow-x:auto;
+  }
+  .diagram svg{display:block; margin:0 auto; max-width:620px; width:100%; height:auto;}
+  .diagram-caption{
+    text-align:center; font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint);
+    margin-top:8px;
+  }
+
+  /* references section */
+  .reflist{display:flex; flex-direction:column; gap:10px;}
+  .refitem{
+    display:grid; grid-template-columns:120px 1fr; gap:14px;
+    padding:12px 0; border-bottom:1px solid var(--line-dim); font-size:13.5px;
+  }
+  .refitem .reftype{
+    font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-faint);
+  }
+  .refitem .refbody b{color:var(--text);}
+  .refitem .refbody span{color:var(--text-dim); display:block; font-size:12.5px; margin-top:3px;}
+  .badge-new{
+    font-family:var(--font-mono); font-size:9px; background:var(--violet); color:#0E1F35; padding:2px 6px;
+    border-radius:3px; margin-left:8px; vertical-align:middle;
+  }
+
+  footer{max-width:840px; margin:0 auto; padding:40px 40px 10px; color:var(--text-faint); font-size:12px; font-family:var(--font-mono);}
+
+  @media (max-width: 880px){
+    .sidebar{position:relative; width:100%; height:auto; border-right:none; border-bottom:1px solid var(--line-dim);}
+    main{margin-left:0;}
+    .app{flex-direction:column;}
+    .wrap{padding:0 20px;}
+    .subtopic-body{padding-left:20px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <b>Materi Dasar — Riset SOP + Damper</b>
+      Panduan belajar mandiri · disusun dari Bab Landasan Teori 4 riset acuan + referensi tambahan
+    </div>
+
+    <div class="search-box">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9FB8CE" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="searchInput" type="text" placeholder="Cari topik / rumus / istilah…">
+    </div>
+
+    <nav class="toc" id="tocNav">
+      <a href="#A"><span class="letter">A</span> Dinamika Struktur & Gempa</a>
+      <a href="#B"><span class="letter">B</span> Mekanika Nonlinear Penampang</a>
+      <a href="#C"><span class="letter">C</span> Elemen Hingga Nonlinear</a>
+      <a href="#D"><span class="letter">D</span> Interaksi Tanah-Struktur</a>
+      <a href="#E"><span class="letter">E</span> Damper & Bearing</a>
+      <a href="#F"><span class="letter">F</span> Ground Motion & Scaling</a>
+      <a href="#G"><span class="letter">G</span> Metode Analisis Berjenjang</a>
+      <a href="#H"><span class="letter">H</span> Variabel Pembanding Performa</a>
+      <a href="#I"><span class="letter">I</span> Software & Scripting</a>
+      <a href="#J"><span class="letter">J</span> Standar & Referensi</a>
+    </nav>
+
+    <div class="toggle-all">
+      <button id="openAll">Buka semua</button>
+      <button id="closeAll">Tutup semua</button>
+    </div>
+
+    <div class="legend">
+      <div class="row"><span class="dot" style="background:var(--tag-conf)"></span> Konferensi ISLIE (urgent)</div>
+      <div class="row"><span class="dot" style="background:var(--tag-skripsi)"></span> Skripsi S1</div>
+      <div class="row"><span class="dot" style="background:var(--tag-tesis)"></span> Tesis S2</div>
+    </div>
+
+    <div class="progress">
+      Dibaca: <b id="readCount">0</b> / <span id="totalCount">0</span> subtopik
+    </div>
+  </aside>
+
+  <main>
+    <div class="wrap">
+
+      <div class="hero">
+        <div class="kicker">Lembar Belajar · Rev. 04</div>
+        <h1>Materi Dasar untuk Riset Seismik SOP + Damper</h1>
+        <p>Rangkuman teori inti yang perlu kamu kuasai sebelum lanjut pemodelan STKO/OpenSees — disusun dari bab Landasan Teori / Theoretical Background riset acuan (Haroki 2022, Darmawan 2021, Emilidardi 2022, Hidayat dkk. 2024), <b style="color:var(--gold)">kini diperkaya data backbone SSBD (eksperimen + Abaqus), disertasi & paper ANN Pak Angga, dan preseden metodologi untuk skripsi</b>, ditambah rujukan luar bila diperlukan.</p>
+        <div class="titleblock">
+          <div><span>Objek</span><strong>SHSPG / SOP + SSBD-ERB</strong></div>
+          <div><span>Sumber utama</span><strong>9+ dok. project knowledge</strong></div>
+          <div><span>Cakupan</span><strong>Topik A–J</strong></div>
+          <div><span>Untuk</span><strong>Konf · Skripsi · Tesis</strong></div>
+        </div>
+        <div style="margin-top:14px; font-family:var(--font-mono); font-size:11px; color:var(--text-faint);">Rev. 04 — Bab H diperdalam: mekanisme fisik sendi plastis (rotasi plastis, redistribusi momen, bar buckling, capacity design), kurva histeretik lengkap dengan diagram, backbone curve & segitiga energi elastis E_S dengan diagram</div>
+      </div>
+
+      <!-- ================= A ================= -->
+      <section class="topic" id="A">
+        <div class="topic-header">
+          <div class="topic-letter">A</div>
+          <div class="topic-title">
+            <h2>Dinamika Struktur & Konsep Gempa</h2>
+            <p class="desc">Bagaimana gaya gempa diterjemahkan jadi beban desain, dan bagaimana struktur meresponnya secara dinamik.</p>
+          </div>
+        </div>
+        <div class="topic-meta">
+          <span><b>Sumber utama:</b> Haroki §3.1–3.2, 3.10–3.12; SNI 2833:2016 §5.3–6.3</span>
+          <span><b>Wajib untuk:</b> ketiga proyek (fondasi paling dasar)</span>
+        </div>
+
+        <details class="subtopic" open>
+          <summary class="subtopic-head">
+            Persamaan dasar dinamik SDOF & beban gempa jembatan
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Struktur yang digoyang gempa itu, secara matematis, cuma sistem massa-pegas-peredam sederhana (SDOF — single degree of freedom). Semua model 3D rumit di OpenSees pada dasarnya perluasan dari konsep ini di banyak titik sekaligus (MDOF).</p>
+            <div class="formula">
+              <div class="eq">m ü + c u̇ + k u = m ü<sub>g</sub></div>
+              <div class="legend-list">
+                <div><b>m</b> = massa struktur &nbsp; <b>c</b> = koefisien redaman viskos &nbsp; <b>k</b> = kekakuan struktur</div>
+                <div><b>u, u̇, ü</b> = perpindahan, kecepatan, percepatan relatif struktur &nbsp; <b>ü<sub>g</sub></b> = percepatan tanah</div>
+              </div>
+            </div>
+            <p>Untuk desain jembatan, gaya gempa (EQ) diturunkan dari berat struktur dikalikan koefisien respons elastik, lalu <b>dibagi faktor modifikasi respons (R)</b> — ini titik krusial proyekmu, karena R inilah yang menentukan berapa banyak tiang yang "boleh" kamu kurangi.</p>
+            <div class="formula">
+              <div class="eq">EQ = (C<sub>sm</sub> / R) × W<sub>t</sub></div>
+              <div class="legend-list">
+                <div><b>C<sub>sm</sub></b> = koefisien respons gempa elastik (dari respons spektra desain) &nbsp; <b>R</b> = faktor modifikasi respons &nbsp; <b>W<sub>t</sub></b> = berat total struktur</div>
+              </div>
+            </div>
+            <p>Logikanya: makin besar R, makin kecil gaya gempa desain → elemen struktur boleh didesain lebih ramping/sedikit → tapi struktur "diizinkan" berperilaku lebih inelastis saat gempa kuat beneran terjadi. Damper kamu (SSBD) fungsinya menebus izin inelastis ini dengan mendisipasi energi, bukan lewat kerusakan tiang.</p>
+            <div class="callout"><b>Kenapa ini penting:</b> seluruh argumen paper konferensimu ("R=3,5 + damper ≈ performa R=1,5") berdiri di atas dua rumus ini. Pastikan kamu bisa jelaskan keduanya tanpa buka catatan saat sidang/tanya-jawab.</div>
+            <div class="source"><b>Sumber:</b> Haroki §3.2 Pers. 3.1 · SNI 2833:2016 §5.4.2</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Respons spektra desain & faktor amplifikasi situs
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Respons spektra desain itu grafik "seberapa besar gaya gempa yang dirasakan struktur, tergantung periode getarnya". Bentuknya selalu punya 3 zona: naik cepat, datar (plateau), lalu turun.</p>
+            <div class="formula">
+              <div class="eq">T &lt; T<sub>0</sub> &nbsp;→&nbsp; C<sub>sm</sub> = S<sub>DS</sub> (0,6·T/T<sub>0</sub> + 0,4)</div>
+              <div class="eq">T<sub>0</sub> ≤ T ≤ T<sub>s</sub> &nbsp;→&nbsp; C<sub>sm</sub> = S<sub>DS</sub></div>
+              <div class="eq">T &gt; T<sub>s</sub> &nbsp;→&nbsp; C<sub>sm</sub> = S<sub>D1</sub> / T</div>
+              <div class="legend-list">
+                <div><b>S<sub>DS</sub></b> = F<sub>a</sub>×S<sub>S</sub> (spektra periode pendek) &nbsp; <b>S<sub>D1</sub></b> = F<sub>v</sub>×S<sub>1</sub> (spektra periode 1 detik)</div>
+                <div><b>F<sub>PGA</sub>, F<sub>a</sub>, F<sub>v</sub></b> = faktor amplifikasi tergantung kelas situs tanah (batuan keras → tanah lunak, makin lunak makin besar amplifikasinya)</div>
+              </div>
+            </div>
+            <p>Poin praktisnya: <b>lokasi & kelas situs tanahmu menentukan bentuk grafik ini</b>. Kalau situs studimu beda dari Yogyakarta (dipakai Haroki/Darmawan) atau Kulon Progo (Emilidardi), kamu wajib bangun ulang respons spektra dari peta gempa Indonesia terbaru untuk lokasimu — jangan pinjam angka mereka.</p>
+            <div class="source"><b>Sumber:</b> SNI 2833:2016 §5.3.2, §5.4.1–5.4.2 · Haroki §3.2</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Faktor Modifikasi Respons (R) — kategori kepentingan struktur
+            <span class="subtopic-tags"><span class="tag conf">Konf</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Nilai R ditentukan dua hal: tipe bangunan bawah, dan kategori kepentingan struktur (Sangat Penting / Penting / Lainnya) yang ditetapkan perencana.</p>
+            <table class="datatable">
+              <tr><th>Bangunan bawah</th><th>Sangat Penting</th><th>Penting</th><th>Lainnya</th></tr>
+              <tr><td>Pilar tipe dinding</td><td>1,5</td><td>1,5</td><td>2,0</td></tr>
+              <tr><td>Tiang vertikal (beton bertulang)</td><td>1,5</td><td>2,0</td><td>3,0</td></tr>
+              <tr><td>Kolom tunggal</td><td>1,5</td><td>2,0</td><td>3,0</td></tr>
+              <tr><td>Tiang vertikal (baja/komposit)</td><td>1,5</td><td>3,5</td><td>5,0</td></tr>
+              <tr><td>Kolom majemuk (baja/komposit)</td><td>1,5</td><td>3,5</td><td>5,0</td></tr>
+            </table>
+            <p>Kasus Haroki/Darmawan pakai R=1,5 ("Sangat Penting") vs R=3,5 ("Penting") untuk spun pile yang sama — artinya <b>klasifikasi kepentingan struktur, bukan cuma tipe material tiang</b>, yang jadi tuas utama penentuan R. Cek dulu ke pembimbing bagaimana situs studimu diklasifikasikan sebelum menetapkan R=1,5 vs R=3,5 di modelmu.</p>
+            <div class="source"><b>Sumber:</b> SNI 2833:2016 Tabel 3, dikutip di Haroki §3.2 Tabel 3.1</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Keseimbangan energi gempa & equivalent viscous damping
+            <span class="subtopic-tags"><span class="tag conf">Konf</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Ini fondasi teori untuk klaim "kontribusi disipasi energi damper sekian persen" yang jadi salah satu hasil utama papermu nanti. Berdasarkan hukum kekekalan energi (Uang & Bertero, 1990):</p>
+            <div class="formula">
+              <div class="eq">E<sub>g</sub> = E<sub>k</sub> + E<sub>d</sub> + E<sub>a</sub></div>
+              <div class="legend-list">
+                <div><b>E<sub>g</sub></b> = energi gempa total &nbsp; <b>E<sub>k</sub></b> = energi kinetik &nbsp; <b>E<sub>d</sub></b> = energi redaman viskos &nbsp; <b>E<sub>a</sub></b> = energi histeresis (sendi plastis + damper)</div>
+              </div>
+            </div>
+            <p>Setelah gempa berhenti, E<sub>k</sub> kembali ke nol (energi kinetik itu "recoverable"), jadi energi total struktur pada akhirnya cuma disipasi lewat redaman viskos dan histeresis:</p>
+            <div class="formula">
+              <div class="eq">E<sub>struktur</sub> = m Σ ü Δu + c Σ u̇ Δu + Σ F<sub>tiang</sub> Δu + Σ F<sub>SPD</sub> Δu</div>
+            </div>
+            <p>Persentase kontribusi damper = energi histeresis damper (suku terakhir) dibagi energi total struktur. Untuk mengukur redaman ekivalen dari satu siklus histeresis (dipakai Darmawan & Hidayat), pakai rumus Jacobsen (1930):</p>
+            <div class="formula">
+              <div class="eq">ξ<sub>eq</sub> = (1 / 2π) × (A<sub>hyst</sub> / A<sub>0</sub>)</div>
+              <div class="legend-list"><div><b>A<sub>hyst</sub></b> = luas area di dalam loop histeresis satu siklus &nbsp; <b>A<sub>0</sub></b> = luas energi perfect-plastic pada increment perpindahan yang sama</div></div>
+            </div>
+            <div class="source"><b>Sumber:</b> Haroki §3.11, §4.9 · Uang & Bertero (1990) · Hidayat dkk. (2024) Pers. 10–11</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Metode analisis dinamik & level performa seismik
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag skripsi">Skripsi</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>SNI 2833:2016 mengenal 4 tingkatan metode analisis dinamik, makin ke bawah makin detail dan makin berat komputasinya:</p>
+            <ol>
+              <li><b>Beban statis ekivalen</b> — paling sederhana, pakai koefisien respons langsung.</li>
+              <li><b>Spektra moda tunggal</b> — pakai ragam getar fundamental saja.</li>
+              <li><b>Spektra multimoda</b> — gabung banyak ragam getar pakai metode CQC (Complete Quadratic Combination), wajib kalau ada coupling arah.</li>
+              <li><b>Riwayat waktu (time history)</b> — paling detail, pakai rekaman percepatan gempa asli/sintetis sebagai beban langsung. Ini yang dipakai NLTHA di ketiga riset acuanmu.</li>
+            </ol>
+            <p>Setelah dapat respons struktur, hasilnya dibandingkan ke <b>level performa seismik</b>. Dua kerangka acuan berbeda dipakai di 4 riset acuanmu — pilih salah satu (atau justifikasi keduanya) sesuai tipe strukturmu:</p>
+            <table class="datatable">
+              <tr><th>Kerangka</th><th>Level</th><th>Dipakai oleh</th></tr>
+              <tr><td>ASCE 61-14 (wharf structure)</td><td>Minimal Damage → Controlled & Repairable Damage → Life Safety Protection</td><td>Haroki, Darmawan (analogi SOP ↔ struktur dermaga: sama-sama tiang + pile head)</td></tr>
+              <tr><td>ASCE 41-17 / FEMA 356</td><td>Operational → Immediate Occupancy → Life Safety → Collapse Prevention</td><td>Emilidardi (pier jembatan girder)</td></tr>
+            </table>
+            <div class="source"><b>Sumber:</b> SNI 2833:2016 §6.3.2–6.3.4 · Haroki §3.7 Tabel 3.5 · Emilidardi</div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ================= B ================= -->
+      <section class="topic" id="B">
+        <div class="topic-header">
+          <div class="topic-letter">B</div>
+          <div class="topic-title">
+            <h2>Mekanika Nonlinear Penampang</h2>
+            <p class="desc">Bagaimana beton dan baja "berperilaku" saat leleh/retak — dasar mutlak sebelum menyentuh fiber section di OpenSees.</p>
+          </div>
+        </div>
+        <div class="topic-meta">
+          <span><b>Sumber utama:</b> Haroki §3.6; Darmawan §3.1; Emilidardi §4</span>
+          <span><b>Wajib untuk:</b> ketiga proyek — tanpa ini kamu tidak bisa membangun elemen tiang sama sekali</span>
+        </div>
+
+        <details class="subtopic" open>
+          <summary class="subtopic-head">
+            Beton confined vs unconfined — model Kent & Park
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag skripsi">Skripsi</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Penampang beton bertulang punya dua "kepribadian" berbeda: <b>selimut beton</b> (di luar sengkang/spiral, disebut unconfined) dan <b>inti beton</b> (di dalam sengkang/spiral, disebut confined). Sengkang/spiral mengekang inti beton sehingga inti tetap kuat meski selimutnya sudah rontok — ini yang bikin beton confined jauh lebih daktail.</p>
+            <p>Model Kent & Park (1971) untuk beton <b>unconfined</b> punya dua rejim:</p>
+            <div class="formula">
+              <div class="eq">ε<sub>c</sub> ≤ 0,002 &nbsp;→&nbsp; f<sub>c</sub> = f'<sub>c</sub> [2ε<sub>c</sub>/0,002 − (ε<sub>c</sub>/0,002)²]</div>
+              <div class="eq">ε<sub>c</sub> &gt; 0,002 &nbsp;→&nbsp; f<sub>c</sub> = f'<sub>c</sub> [1 − Z(ε<sub>c</sub> − 0,002)]</div>
+              <div class="legend-list"><div><b>f'<sub>c</sub></b> = kuat tekan beton maksimum &nbsp; <b>Z</b> = kemiringan pelunakan pasca-puncak, ditentukan dari ε<sub>50u</sub> (untuk unconfined) atau ε<sub>50u</sub>+ε<sub>50h</sub> (untuk confined)</div></div>
+            </div>
+            <p>Scott dkk. (1982) memodifikasi model ini untuk beton <b>confined</b> — kuat tekan maksimum naik jadi K·f'c dan regangan puncaknya jadi 0,002K, di mana K adalah faktor peningkatan akibat efek kekangan:</p>
+            <div class="formula">
+              <div class="eq">K = 1 + p" f<sub>yh</sub> / f'<sub>c</sub></div>
+              <div class="legend-list"><div><b>p"</b> = rasio volume sengkang/spiral terhadap volume inti beton &nbsp; <b>f<sub>yh</sub></b> = tegangan leleh sengkang/spiral</div></div>
+            </div>
+            <div class="callout"><b>Catatan penting untuk spun pile:</b> karena spun pile berongga (hollow), spiralnya <i>tidak</i> mengekang inti beton secara efektif (tidak ada "inti" solid untuk dikekang). Karena itu Haroki & Darmawan memakai <b>rumus unconfined untuk seluruh penampang spun pile</b>, bukan model confined. Ini beda dari pilar/kolom solid biasa — jangan asal pakai model confined penuh kalau strukturmu juga pakai spun pile berongga.</div>
+            <p>Kuat tarik beton (dipakai di Concrete02 untuk tension softening):</p>
+            <div class="formula">
+              <div class="eq">f<sub>ct</sub> = 0,6 √f'<sub>c</sub> &nbsp;&nbsp;&nbsp; ε<sub>ct</sub> = f<sub>ct</sub>/E<sub>0</sub> &nbsp;&nbsp;&nbsp; E<sub>0</sub> = 2f'<sub>c</sub>/0,002</div>
+            </div>
+            <div class="source"><b>Sumber:</b> Haroki §3.6 Pers. 3.36–3.50 · Kent & Park (1971) · Scott dkk. (1982) · Darmawan §3.1</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Model material baja tulangan & PC bar (prategang)
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag skripsi">Skripsi</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Baja tulangan/PC bar dimodelkan bilinear kinematic hardening (Steel01) — sederhana tapi cukup untuk kebanyakan analisis pushover/NLTHA:</p>
+            <div class="formula">
+              <div class="legend-list">
+                <div><b>f<sub>y</sub></b> = tegangan leleh &nbsp; <b>E<sub>0</sub></b> = modulus elastisitas awal &nbsp; <b>b</b> = rasio kekakuan pasca-leleh terhadap kekakuan awal (biasanya 0,01–0,03 untuk baja tulangan)</div>
+              </div>
+            </div>
+            <p>Khusus untuk PC bar (tendon prategang), ada dua tambahan penting:</p>
+            <ul>
+              <li><b>MinMax material</b> — pembatas regangan; kalau regangan lewat batas ultimit, material dianggap gagal/putus. Ini mencegah model "lupa" bahwa baja punya batas patah.</li>
+              <li><b>InitialStrain material</b> — menyuntikkan regangan awal ke elemen untuk mensimulasikan efek gaya prategang sebelum beban lain bekerja. Wajib untuk spun pile karena PC bar-nya ditarik (stressed) sebelum dicor.</li>
+            </ul>
+            <p>Di Response2000 (software bantu untuk kalibrasi momen-kurvatur), kurva tegangan-regangan PC bar justru dimodelkan lebih halus pakai fungsi Modified Ramberg-Osgood (dua garis lurus disambung kurva transisi) — dipakai untuk validasi, sebelum disederhanakan jadi Steel01 bilinear di model OpenSees skala penuh.</p>
+            <div class="source"><b>Sumber:</b> Haroki §4.3 Tabel 4.2 · Darmawan §3.3.2 Pers. 3.13 · Mazzoni dkk. (2006)</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Fiber section, plastic hinge, dan momen-kurvatur
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag skripsi">Skripsi</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Fiber section membagi penampang jadi banyak "serat" kecil, tiap serat dapat jatah material sendiri (beton atau baja) dengan kurva tegangan-regangannya masing-masing. Total gaya aksial dan momen penampang dihitung dengan mengintegralkan tegangan tiap serat terhadap posisinya. Ini jauh lebih akurat dari pendekatan sendi plastis lumped biasa, karena distribusi tegangan riil di penampang ikut tertangkap.</p>
+            <p>Karena elemen force-based (yang dipakai untuk elemen tiang di semua riset acuan) menghitung respons lewat titik-titik integrasi sepanjang elemen, kerapatan sendi plastis ditentukan oleh <b>skema integrasi Gauss-Lobatto</b> — titik-titiknya memang sengaja memusat ke ujung elemen, karena di situlah momen biasanya maksimum dan sendi plastis terbentuk.</p>
+            <p>Panjang sendi plastis (plastic hinge length, L<sub>p</sub>) dipakai untuk menentukan sepanjang mana fiber section "aktif" secara nonlinear di dekat ujung elemen (sisanya elastis) — di studi Emilidardi nilainya dihitung sekitar 933 mm untuk pier PCI-girder-nya. Nilai ini spesifik per geometri/beban aksial elemenmu, harus dihitung ulang, bukan diambil langsung dari riset lain.</p>
+            <div class="callout"><b>Relevansi ke Proyek 2 (skripsi):</b> kalau kamu tambah pile cap at-grade, lokasi momen maksimum sepanjang tiang bisa bergeser — artinya lokasi sendi plastis efektif juga ikut bergeser. Ini justru salah satu metrik utama yang perlu kamu laporkan.</div>
+            <div class="source"><b>Sumber:</b> Emilidardi §3–4 · Coleman & Spacone (2001) tentang localization pada force-based element</div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ================= C ================= -->
+      <section class="topic" id="C">
+        <div class="topic-header">
+          <div class="topic-letter">C</div>
+          <div class="topic-title">
+            <h2>Elemen Hingga Nonlinear (OpenSees/STKO)</h2>
+            <p class="desc">Menerjemahkan teori Bab A–B jadi elemen, material, dan constraint yang benar-benar bisa dijalankan solver.</p>
+          </div>
+        </div>
+        <div class="topic-meta">
+          <span><b>Sumber utama:</b> Haroki §4.6; Darmawan §4.6; STKO Manual §2, §3.8</span>
+          <span><b>Wajib untuk:</b> ketiga proyek — ini "bahasa" yang dipakai di semua model</span>
+        </div>
+
+        <details class="subtopic" open>
+          <summary class="subtopic-head">
+            Tipe elemen: forceBeamColumn, zeroLength, twoNodeLink
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag skripsi">Skripsi</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <ul>
+              <li><b>forceBeamColumn</b> — dipakai untuk elemen tiang/pilar dengan fiber section. Lebih akurat menangkap nonlinearitas dengan elemen lebih sedikit (dibanding dispBeamColumn), tapi butuh iterasi konvergensi khusus karena formulasinya iteratif secara internal.</li>
+              <li><b>dispBeamColumn</b> — alternatif lebih stabil secara numerik, tapi butuh diskretisasi (mesh) lebih halus untuk akurasi yang setara. Dipakai STKO Manual untuk contoh sederhana (portal 2D).</li>
+              <li><b>zeroLength</b> — elemen "jarak nol" yang menghubungkan dua node di lokasi sama, dipakai untuk sendi lumped, pegas tanah (p-y/t-z/q-z), stopper, shear key, dan sambungan kaku.</li>
+              <li><b>twoNodeLink</b> — elemen penghubung dua node dengan material uniaxial per derajat kebebasan (DOF). Ini yang dipakai untuk ERB dan SPD/damper — karena keduanya secara fungsi memang "pegas" dengan kurva gaya-perpindahan tertentu, bukan elemen struktural biasa.</li>
+            </ul>
+            <p>Semua elemen tiang di 4 riset acuan pakai transformasi <b>corotational</b> (bukan linear) — ini menangkap efek P-Delta dan deformasi besar, penting karena tiang ramping bisa mengalami defleksi lateral signifikan saat gempa kuat.</p>
+            <div class="codemap">
+<span class="cm-label">Konsep command Tcl/OpenSeesPy (bukan syntax lengkap, untuk orientasi)</span>geomTransf Corotational $transfTag
+element forceBeamColumn $eleTag $iNode $jNode $transfTag $secTag -integration Lobatto $nIP
+element zeroLength $eleTag $iNode $jNode -mat $matTag1 $matTag2 ... -dir 1 2 3
+element twoNodeLink $eleTag $iNode $jNode -mat $matTag -dir 1</div>
+            <div class="source"><b>Sumber:</b> Haroki §4.6.2 · Darmawan §4.6 · Coleman & Spacone (2001)</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Material inti: Concrete02, Steel01, fiber section builder
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag skripsi">Skripsi</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p><b>Concrete02</b> merepresentasikan model Modified Kent-Park dengan tambahan linear tension softening. Parameter yang wajib kamu isi: f<sub>pc</sub> (kuat tekan), eps<sub>c0</sub> (regangan puncak), f<sub>pcu</sub> (kuat tekan crushing/residual), eps<sub>U</sub> (regangan crushing), λ (rasio unloading terhadap slope awal), f<sub>t</sub> (kuat tarik), E<sub>ts</sub> (tension softening stiffness) — semua ini adalah output langsung dari rumus Bab B.</p>
+            <p><b>Steel01</b> — parameter f<sub>y</sub>, E<sub>0</sub>, b, seperti dibahas di Bab B, dibungkus <b>MinMax</b> dan/atau <b>InitialStrain</b> untuk PC bar.</p>
+            <p>Fiber section dibangun dengan dua command inti: <b>patch</b> (untuk area beton, dibagi jadi subdivisi radial × sirkumferensial — Haroki pakai 40×8 untuk penampang spun pile bundar) dan <b>layer</b> (untuk barisan tulangan/PC bar melingkar).</p>
+            <div class="codemap">
+<span class="cm-label">Konsep — bukan syntax lengkap</span>uniaxialMaterial Concrete02 $matTag $fpc $epsc0 $fpcu $epsU $lambda $ft $Ets
+uniaxialMaterial Steel01 $matTag $fy $E0 $b
+section Fiber $secTag {
+    patch circ $concMat $numSubdivCirc $numSubdivRad $yCenter $zCenter $intRad $extRad
+    layer circ $steelMat $numBars $areaBar $yCenter $zCenter $radius
+}</div>
+            <div class="callout"><b>Praktis di STKO:</b> semua ini punya editor visual (Property → New Physical Property → Sections → Fiber) — kamu tidak perlu ngetik Tcl manual, tapi tetap harus paham parameter apa yang diminta editor itu, karena STKO tidak akan menegur kalau kamu masukkan angka yang secara fisik tidak masuk akal.</div>
+            <div class="source"><b>Sumber:</b> Haroki §4.3.2, Tabel 4.2 · STKO Manual §3.8.2–3.8.3</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Alur kerja praktis di STKO (preprocessor → solver → postprocessor)
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag skripsi">Skripsi</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>STKO itu GUI di atas OpenSees — semua yang kamu klik ujung-ujungnya digenerate jadi file .tcl. Urutan kerja standarnya:</p>
+            <ol>
+              <li><b>Geometry</b> — gambar titik/garis/permukaan struktur (Points, Curves, Surfaces).</li>
+              <li><b>Physical Property</b> — assign material & section (mis. Elastic, Fiber) ke geometri.</li>
+              <li><b>Element Property</b> — assign tipe elemen (forceBeamColumn, dispBeamColumn, dst.) ke geometri yang sama.</li>
+              <li><b>Condition</b> — assign constraint (fix, equalDOF), beban (nodeForce, eleLoad), dan massa.</li>
+              <li><b>Mesh</b> — set ukuran mesh global/lokal, lalu build mesh.</li>
+              <li><b>Analysis Steps</b> — <i>urutannya penting</i>: definisikan Pattern dan Recorder <u>sebelum</u> Analysis Command.</li>
+              <li><b>Run Analysis</b> — STKO memanggil OpenSees, hasil disimpan sebagai file .mpco untuk dibuka di Postprocessor.</li>
+            </ol>
+            <div class="callout"><b>Jebakan umum pemula:</b> lupa urutan Pattern → Recorder → Analysis (recorder yang didefinisikan setelah analysis command tidak akan merekam apa-apa), atau lupa re-mesh setelah mengubah geometri.</div>
+            <div class="source"><b>Sumber:</b> STKO Manual §2.9, §5.3</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Setting solver: constraint handler, numberer, algorithm, integrator
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Ini bagian yang sering dilewati mahasiswa baru — dianggap "pengaturan default", padahal salah pilih bisa bikin analisis gagal konvergen atau (lebih bahaya) konvergen ke jawaban yang salah tanpa error jelas.</p>
+            <table class="datatable">
+              <tr><th>Komponen</th><th>Fungsi</th><th>Contoh dipakai riset acuan</th></tr>
+              <tr><td>Constraint handler</td><td>Cara menerapkan constraint (fix, equalDOF)</td><td>Transformation (gravity/cyclic), Penalty (pushover)</td></tr>
+              <tr><td>Numberer</td><td>Pemetaan DOF ke nomor persamaan</td><td>Reverse Cuthill-McKee (RCM)</td></tr>
+              <tr><td>System (SOE)</td><td>Solver sistem persamaan linear</td><td>UmfPack</td></tr>
+              <tr><td>Algorithm</td><td>Strategi iterasi Newton</td><td>Newton, Krylov-Newton, Newton with Line Search</td></tr>
+              <tr><td>Test</td><td>Kriteria konvergensi</td><td>Norm Displacement Increment Test</td></tr>
+              <tr><td>Integrator</td><td>Cara melangkah tiap step</td><td>Load Control (gravity), Displacement Control (pushover/cyclic), Newmark (NLTHA)</td></tr>
+            </table>
+            <p>Kombinasi solver <b>berubah per tahap analisis</b> — pengaturan gravity berbeda dari pushover, berbeda lagi dari NLTHA. Jangan pakai satu setting solver untuk semua tahap.</p>
+            <div class="source"><b>Sumber:</b> Darmawan §4.3.2.3 · STKO Manual §2.9.4</div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ================= D ================= -->
+      <section class="topic" id="D">
+        <div class="topic-header">
+          <div class="topic-letter">D</div>
+          <div class="topic-title">
+            <h2>Interaksi Tanah-Struktur (SSI) untuk Tiang</h2>
+            <p class="desc">Bagaimana tanah "menahan" tiang secara nonlinear — dan bagaimana menyederhanakannya kalau waktu terbatas.</p>
+          </div>
+        </div>
+        <div class="topic-meta">
+          <span><b>Sumber utama:</b> Haroki §3.4–3.5; Darmawan §3.4–3.5; Setiawan dkk. (2023)</span>
+          <span><b>Paling krusial untuk:</b> Konferensi (presisi) & Skripsi (pile cap tambahan mengubah unsupported length)</span>
+        </div>
+
+        <details class="subtopic" open>
+          <summary class="subtopic-head">
+            Konsep BNWF: tiga jenis pegas tanah (p-y, t-z, q-z)
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag skripsi">Skripsi</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Ada dua pendekatan memodelkan interaksi tanah-struktur: <b>pendekatan struktur bawah (substructure)</b> — tanah diganti pegas — atau <b>pendekatan analisis langsung</b> — tanah dan struktur dimodelkan sebagai satu elemen hingga menyatu. Keempat riset acuanmu semua pakai pendekatan substructure lewat metode <b>BNWF (Beam on Nonlinear Winkler Foundation)</b> karena jauh lebih ringan komputasinya.</p>
+            <p>Tiga jenis pegas nonlinier dipasang sepanjang kedalaman tiang (tiap pegas dibentuk sebagai elemen zeroLength):</p>
+            <ul>
+              <li><b>p-y spring</b> (horizontal) — tahanan lateral tanah terhadap defleksi tiang.</li>
+              <li><b>t-z spring</b> (vertikal, sepanjang badan) — gesekan selimut tiang terhadap tanah akibat pergerakan aksial.</li>
+              <li><b>q-z spring</b> (vertikal, di ujung) — tahanan ujung tiang.</li>
+            </ul>
+            <div class="callout">Di ujung tiang, zeroLength element berisi kombinasi p-y + q-z; di sepanjang badan tiang, kombinasi p-y + t-z.</div>
+            <div class="source"><b>Sumber:</b> Haroki §3.4 · Darmawan §3.4 · McGann & Arduino (2011) · Boulanger dkk. (1999)</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Rumus kurva p-y, t-z, q-z & parameter material OpenSees
+            <span class="subtopic-tags"><span class="tag conf">Konf</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p><b>p-y (API 2000, tanah pasir tanpa likuifaksi)</b> — hubungan hiperbolik antara tahanan lateral dan defleksi:</p>
+            <div class="formula">
+              <div class="eq">p = A·p<sub>u</sub>·tanh( kHy / (A·p<sub>u</sub>) )</div>
+              <div class="legend-list"><div>p<sub>u</sub> diambil dari nilai terkecil antara dua mekanisme keruntuhan tanah (dekat & jauh dari permukaan) &nbsp; <b>k</b> = modulus reaksi tanah awal, fungsi sudut geser dalam φ</div></div>
+            </div>
+            <p>Material OpenSees: <code style="color:var(--line)">PySimple1</code> — parameter kunci: p<sub>ult</sub> (kapasitas ultimit), y<sub>50</sub> (defleksi saat 50% kapasitas termobilisasi), C<sub>d</sub> (tahanan gap/drag), soilType (Matlock/lempung atau API/pasir).</p>
+
+            <p><b>t-z (Mosher 1984, tanah pasir)</b>:</p>
+            <div class="formula">
+              <div class="eq">t = z / (1/E<sub>f</sub> + z/t<sub>max</sub>) &nbsp;&nbsp;&nbsp; t<sub>max</sub> = K<sub>0</sub>·σ<sub>v</sub>·tan δ</div>
+            </div>
+            <p>Material OpenSees: <code style="color:var(--line)">TzSimple1</code> — parameter: t<sub>ult</sub>, z<sub>50</sub>, soilType (Reese & O'Neill / Mosher).</p>
+
+            <p><b>q-z (Vijayvergiya 1977)</b>:</p>
+            <div class="formula">
+              <div class="eq">q = (z/z<sub>c</sub>)<sup>1/3</sup> · q<sub>max</sub> &nbsp;&nbsp;&nbsp; q<sub>max</sub> = σ<sub>v</sub>·N<sub>q</sub></div>
+            </div>
+            <p>Material OpenSees: <code style="color:var(--line)">QzSimple1</code> — parameter: q<sub>ult</sub>, z<sub>50</sub>, suction (rasio tahanan uplift terhadap q<sub>ult</sub>).</p>
+            <div class="callout"><b>Kerja praktis:</b> ini butuh data bor log tanah situsmu (N-SPT, jenis tanah per lapisan, sudut geser φ). Tanpa data ini kamu tidak bisa hitung parameter di atas — jangan mulai modeling sebelum data tanah lengkap di tangan.</div>
+            <div class="source"><b>Sumber:</b> Darmawan §3.4.1–3.4.3 Pers. 3-14 s.d. 3-35 · API RP2A-WSD (2000) · Boulanger dkk. (2003)</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Kedalaman jepit (fixity depth) — dua metode
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag skripsi">Skripsi</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p><b>Metode 1 — Analitik (Davisson & Robinson, 1965):</b> pendekatan cepat, tiang sebagian tertanam disetarakan dengan kantilever terjepit sepanjang L<sub>E</sub>.</p>
+            <div class="formula">
+              <div class="eq">R = ⁴√(EI / kB) &nbsp;&nbsp;&nbsp; T = ⁵√(EI / n<sub>h</sub>)</div>
+              <div class="eq">z<sub>f</sub> = 1,4R &nbsp;(tanah lempung)&nbsp;&nbsp;&nbsp; z<sub>f</sub> = 1,8T &nbsp;(tanah pasir)</div>
+            </div>
+            <p><b>Metode 2 — Numerik (pushover dengan pegas p-y/t-z/q-z penuh):</b> dorong tiang sampai displacement target, plot diagram momen sepanjang kedalaman, titik momen maksimum = titik jepit efektif. Ini lebih akurat tapi butuh model 2D terpisah dulu sebelum dipakai di model 3D besar.</p>
+            <p>Sebagai perbandingan realistis: pada studi Darmawan, hasil numerik dan analitik cukup dekat (≈3,09 m analitik vs hasil simulasi serupa), sementara pada Haroki dengan profil tanah berbeda (lanau lalu pasir), fixity depth-nya jauh lebih dalam (≈5 m). <b>Ini bukti nyata kenapa kamu tidak boleh pinjam angka fixity depth dari riset lain</b> — sangat bergantung pada profil tanah spesifik situsmu.</p>
+            <div class="callout"><b>Relevansi ke Proyek 2 (skripsi):</b> begitu kamu tambah pile cap at-grade, "panjang bebas efektif" tiang di atas tanah berubah — titik jepit hasil pushover kemungkinan juga bergeser. Ini alasan kenapa kalibrasi fixity depth perlu diulang, bukan dipakai ulang dari model baseline.</div>
+            <div class="source"><b>Sumber:</b> Haroki §3.5, §4.4 · Darmawan §3.5, §4.4 · Davisson & Robinson (1965)</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Simplifikasi: linear spring (opsi hemat waktu)
+            <span class="subtopic-tags"><span class="tag conf">Konf</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Kalau p-y/t-z/q-z penuh terlalu berat untuk tenggat konferensi, opsi yang dipakai Emilidardi & Hidayat adalah pegas linear sederhana — pondasi tiang diganti pegas vertikal dan rotasional konstan:</p>
+            <div class="formula">
+              <div class="eq">K<sub>sv</sub> = Σ (AE / L) &nbsp;&nbsp;&nbsp; K<sub>sr</sub> = Σ k<sub>vi</sub> S<sub>i</sub>²</div>
+              <div class="legend-list"><div><b>A</b> = luas tiang &nbsp; <b>E</b> = modulus elastis tiang &nbsp; <b>L</b> = panjang tiang &nbsp; <b>S<sub>i</sub></b> = jarak tiang ke-i terhadap sumbu rotasi kelompok tiang</div></div>
+            </div>
+            <p>Trade-off-nya jelas: jauh lebih cepat dikalibrasi (tidak butuh data bor log detail per lapisan), tapi kehilangan kemampuan menangkap nonlinearitas tanah dan pergeseran titik jepit akibat gempa besar. Untuk paper konferensi dengan tenggat ketat, ini kompromi yang defendable — asal kamu nyatakan eksplisit sebagai keterbatasan (limitation) di papernya.</p>
+            <div class="source"><b>Sumber:</b> Emilidardi §4 Pers. 4.2–4.3, Tabel 4.3</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Preseden langsung untuk Skripsi: pile-column dengan perlakuan di zona atas (Setiawan dkk., 2023)
+            <span class="subtopic-tags"><span class="tag skripsi">Skripsi</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Ini referensi baru yang paling dekat secara metodologi dengan proyek skripsimu — ditulis oleh tim riset yang sama (termasuk Pak Angga sendiri sebagai penulis pertama). Bedanya dengan risetmu: mereka memberi perlakuan tambahan di dalam rongga tiang dekat kepala tiang (<b>concrete infill treatment</b> — rongga spun pile diisi beton bertulang di zona atas), bukan menambah pile cap eksternal di permukaan tanah. Tapi kerangka perbandingannya sangat transferable ke skripsimu.</p>
+            <p>Tiga kelompok model dibandingkan, masing-masing dengan dua skenario kondisi ujung atas:</p>
+            <ul>
+              <li><b>Hollow spun pile + concrete infill</b> (rasio tulangan infill 1,6%) vs <b>hollow spun pile polos</b> vs <b>bored pile</b></li>
+              <li>Tiap tipe diuji dengan kondisi ujung atas <b>bebas + interaksi tanah-tiang penuh (SPSI)</b> vs <b>terjepit penuh di dasar (bottom-fixed)</b></li>
+            </ul>
+            <div class="callout"><b>Temuan kunci yang langsung relevan ke skripsimu:</b> idealisasi ujung atas terjepit penuh menghasilkan kekuatan struktur sampai <b>1,8× lebih tinggi</b> dibanding ujung bebas. Ini bukti kuantitatif seberapa besar pengaruh kondisi batas di kepala tiang terhadap performa keseluruhan — dan pile cap at-grade yang kamu teliti pada dasarnya "duduk" di suatu titik antara dua ekstrem ini (bebas penuh vs terjepit penuh). Studi ini jadi pembanding kuantitatif yang bagus untuk hasil skripsimu nanti.</div>
+            <p>Detail pemodelan yang berbeda dari Haroki/Darmawan — perlu kamu putuskan sendiri mana yang kamu ikuti:</p>
+            <ul>
+              <li>Elemen tiang pakai <b>dispBeamColumn</b> (bukan forceBeamColumn) dengan fiber section + integrasi Gauss-Lobatto</li>
+              <li>Kurva p-y merujuk API (2007) — bukan API (2000) seperti Haroki/Darmawan (versi lebih baru, cek apakah ada perbedaan signifikan pada parameter yang kamu pakai)</li>
+              <li>Validasi numerik memakai data uji <b>Chai & Hutchinson (2002)</b> — bukan Irawan dkk. (2018) yang dipakai Haroki/Darmawan. Spesimen: tinggi bebas 6D, tertanam 13,5D, beban aksial 0,1f'c. Hasil numerik ~18% lebih rendah dari eksperimen pada kekuatan lateral — masih dianggap sesuai (agreement yang wajar untuk validasi jenis ini)</li>
+            </ul>
+            <p>Kalau kamu butuh benchmark validasi kedua di luar Irawan dkk. (2018), data Chai & Hutchinson di paper ini bisa jadi opsi pembanding independen.</p>
+            <div class="source"><b>Sumber:</b> Setiawan, A.F., Santoso, A.K., Darmawan, M.F., Adi, A.D., Ismanti, S. (2023). Civil Engineering Journal, 9(7), pp. 1561–1578</div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ================= E ================= -->
+      <section class="topic" id="E">
+        <div class="topic-header">
+          <div class="topic-letter">E</div>
+          <div class="topic-title">
+            <h2>Perangkat Damper & Bearing</h2>
+            <p class="desc">Domain paling spesifik ke risetmu — dasar dari SPD literatur, untuk nanti kamu adaptasi ke SSBD.</p>
+          </div>
+        </div>
+        <div class="topic-meta">
+          <span><b>Sumber utama:</b> Haroki §3.9, §4.6.5; Darmawan §3.6; Emilidardi §3.3; Draft SSBD-ERB; AFS-Dist (2018); 74_I_131</span>
+          <span><b>Prioritas tertinggi untuk:</b> Konferensi — ini jantung novelty papermu</span>
+        </div>
+
+        <details class="subtopic" open>
+          <summary class="subtopic-head">
+            Asal-usul konsep: dari SPD/FDG + Gap (disertasi Pak Angga) ke SSBD-RB
+            <span class="subtopic-tags"><span class="tag conf">Konf</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Ini konteks yang bagus untuk bab tinjauan pustaka papermu — supaya kamu bisa mengutip asal argumen "kenapa perlu gap" dari sumber primernya, bukan cuma mengutip Haroki yang mengutip orang lain.</p>
+            <p>Disertasi Pak Angga (Kyoto University, 2018 — <i>Development of High Seismic Performance Integrated Bridge Pier Connected by Hysterical Damper</i>) berangkat dari pengamatan pasca gempa besar Jepang Timur (2011): kerusakan pada tumpuan karet jembatan ternyata <b>bukan cuma akibat gempa</b>, tapi lebih sering akibat deteriorasi kumulatif dari beban harian — lalu lintas, angin, ekspansi termal, rangkak (creep), dan susut (shrinkage) yang terjadi terus-menerus sepanjang umur layan.</p>
+            <p>Dari situ lahir dua konsep damper+gap yang beliau kembangkan dan uji (eksperimen + FE 3D di Abaqus): <b>Shear Panel Damper plus Gap (SPDG)</b> dan <b>Friction Damper plus Gap (FDG)</b>. Keduanya terbukti bekerja sesuai desain — gap secara nyata mengurangi kekakuan awal pada deformasi kecil (di bawah panjang gap) dan baru mengaktifkan damper penuh setelah gap terlampaui.</p>
+            <div class="callout">Ini <b>sumber asli</b> dari filosofi gap yang dipakai Haroki & Darmawan pada sistem SPD+ERB mereka — bukan konsep yang mereka temukan sendiri, tapi diwarisi dari riset SPDG/FDG Pak Angga. Garis riset ini kemudian berkembang lagi ke sistem <b>SSBD-RB</b> (Stainless Steel Bar Damper – Rubber Bearing) yang jadi materi utama proyek konferensimu — lihat dua subtopik berikutnya.</div>
+            <div class="source"><b>Sumber:</b> AFS-Dist (2018) Bab 3 & 5 · Setiawan & Takahashi (2018), 74_I_131.pdf</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Model histeretik SPD: bilinear kinematic hardening
+            <span class="subtopic-tags"><span class="tag conf">Konf</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>SPD (shear panel damper) mendisipasi energi lewat leleh geser pelat baja mutu rendah (low-yield steel). Chen, Ge & Usami (2006) mengusulkan model bilinear dengan kinematic hardening sebagai simplifikasi kurva histeresis riilnya. Parameter kunci:</p>
+            <div class="formula">
+              <div class="eq">τ<sub>y</sub> = σ<sub>y</sub> / √3 &nbsp;&nbsp;(kriteria leleh von Mises, tegangan normal → geser)</div>
+              <div class="eq">τ<sub>u</sub> = τ<sub>w</sub> + τ<sub>f</sub> &nbsp;&nbsp;(kontribusi web + flange terhadap kuat geser ultimit)</div>
+            </div>
+            <p>Untuk link element di OpenSees, parameter di atas dikonversi ke gaya-perpindahan (bukan tegangan-regangan), karena twoNodeLink butuh input force-displacement langsung:</p>
+            <div class="formula">
+              <div class="eq">K<sub>0</sub> = F<sub>wcr</sub> / δ<sub>wcr</sub> &nbsp;&nbsp;(kekakuan elastis awal)</div>
+              <div class="eq">K<sub>h</sub> = (F<sub>u</sub> − F<sub>wcr</sub>) / (δ<sub>u</sub> − δ<sub>wcr</sub>) &nbsp;&nbsp;(kekakuan pasca-leleh)</div>
+              <div class="legend-list"><div><b>F<sub>wcr</sub></b> = gaya leleh web &nbsp; <b>F<sub>u</sub></b> = gaya ultimit &nbsp; <b>δ<sub>wcr</sub>, δ<sub>u</sub></b> = perpindahan leleh & ultimit</div></div>
+            </div>
+            <p>Di OpenSees, ini biasa dipetakan langsung ke material <code style="color:var(--line)">Steel01</code> pada elemen twoNodeLink — contoh angka dari Haroki: f<sub>y</sub>=80.220 N (bukan MPa — ini sudah dalam satuan gaya karena link element), E<sub>0</sub>=13.555 N/mm, b=0,06.</p>
+            <div class="callout"><b>Relevansi ke SSBD-mu:</b> mekanisme fisik SSBD (leleh lentur batang tirus, bukan geser pelat) memang beda dari SPD ini — tapi <b>format pemodelan di OpenSees tetap sama</b>: link element + material histeretik dengan parameter kekakuan awal, gaya leleh, dan rasio pasca-leleh. Bedanya sekarang: kamu <b>tidak perlu lagi menunggu atau mengira-ngira</b> parameter ini — backbone hasil uji eksperimen & numerik SSBD sudah tersedia lengkap di dua subtopik berikutnya, tinggal dipetakan langsung.</div>
+            <div class="source"><b>Sumber:</b> Darmawan §3.6 Pers. 3-40 s.d. 3-57 · Chen, Ge & Usami (2006, 2007) · Haroki §3.9, §4.6.5</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Mekanisme gap: kenapa perlu, dan cara menentukan besarnya
+            <span class="subtopic-tags"><span class="tag conf">Konf</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Ini konsep yang paling relevan langsung dengan skema SSBD+ERB kamu. Kalau damper langsung aktif dari beban servis harian (lalu lintas, rem, angin, ekspansi termal), pelat/batang bajanya akan mengalami siklus tegangan berulang terus-menerus → <b>fatik siklik (low-cycle fatigue)</b> → kapasitasnya berkurang sebelum sempat "dipakai" saat gempa besar yang sesungguhnya.</p>
+            <p>Solusinya: beri celah (gap) antara elemen struktural dan damper, supaya damper baru mulai menahan gaya setelah perpindahan struktur melewati ambang tertentu. Besarnya gap ditentukan dari perpindahan maksimum struktur akibat beban layan (bukan beban gempa):</p>
+            <div class="callout">Contoh dari Haroki: perpindahan maksimum akibat beban layan (kereta + angin) dihitung 7,56 mm → gap didesain 10 mm (dengan margin). Saat gempa besar terjadi dan perpindahan struktur melewati 10 mm, barulah SPD mulai bekerja menahan gaya dan mendisipasi energi.</div>
+            <p>Secara pemodelan, gap ini masuk sebagai elemen terpisah yang diseri dengan material damper (gap tidak menahan gaya sampai jaraknya "habis", baru setelah itu material damper di baliknya mulai aktif) — konsep umum di OpenSees biasa memakai kombinasi material gap (mis. <code style="color:var(--line)">ElasticPPGap</code>) diserikan (<code style="color:var(--line)">Series</code>) dengan material histeretik damper.</p>
+            <div class="source"><b>Sumber:</b> Haroki §4.6.5 · Setiawan (2018) · Setiawan & Takahashi (2018) · Emilidardi §3.3 Gambar 3.3</div>
+          </div>
+        </details>
+
+        <details class="subtopic" open>
+          <summary class="subtopic-head">
+            Backbone curve SSBD — data eksperimen & numerik siap pakai (4 konfigurasi)
+            <span class="subtopic-tags"><span class="tag conf">Konf</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Ini data paling berharga yang baru masuk ke project knowledge-mu. SSBD (Stainless Steel Bar Damper) dibuat dari baja tahan karat Grade 304, diuji dalam 4 profil memanjang berbeda, lewat pengujian siklik eksperimental <b>dan</b> validasi numerik Abaqus (C3D8R solid element, combined hardening, general contact). Ini bukan lagi rujukan konseptual — ini backbone curve nyata yang siap kamu petakan langsung ke material OpenSees.</p>
+            <table class="datatable">
+              <tr><th>Kode</th><th>Profil memanjang</th><th>Diameter dasar / ujung</th><th>Ciri khas</th></tr>
+              <tr><td>SSBD-A</td><td>Tirus linear (linear tapered)</td><td>22 mm / 14 mm</td><td>Distribusi leleh paling merata di sepanjang batang</td></tr>
+              <tr><td>SSBD-B</td><td>Tirus eksponensial</td><td>22 mm / 14 mm</td><td>Sendi plastis cenderung terpusat di satu titik</td></tr>
+              <tr><td>SSBD-C</td><td>Tirus linear + kepala membesar</td><td>22 mm / 14 mm (kepala 22 mm)</td><td>Rawan retak terlokalisasi di sambungan kepala</td></tr>
+              <tr><td>SSBD-D</td><td>Silinder (uniform)</td><td>22 mm (seragam)</td><td>Kapasitas beban tertinggi, tapi kegagalan getas di ujung jepit</td></tr>
+            </table>
+            <p><b>Sifat material baja Grade 304</b> (dari uji tarik, rata-rata 3 spesimen) — langsung dipakai sebagai properti elastis-plastis di Abaqus, dan jadi titik awal kalau kamu mau turunkan parameter Steel02 di OpenSees:</p>
+            <div class="formula">
+              <div class="legend-list">
+                <div><b>E</b> = 190.000 MPa &nbsp; <b>ν</b> = 0,30 &nbsp; <b>f<sub>y</sub></b> ≈ 327,77 MPa (rata-rata) &nbsp; <b>f<sub>u</sub></b> ≈ 666,43 MPa &nbsp; elongasi ≈ 54%</div>
+              </div>
+            </div>
+            <p><b>Titik leleh & ultimit tiap konfigurasi</b> (hasil idealisasi FEMA 356, arah positif — data arah negatif ada di paper untuk cek simetri):</p>
+            <table class="datatable">
+              <tr><th>Spesimen</th><th>Δ<sub>y</sub> (mm)</th><th>H<sub>y</sub> (kN)</th><th>Δ<sub>u</sub> (mm)</th><th>H<sub>u</sub> (kN)</th><th>Drift ratio (%)</th></tr>
+              <tr><td>SSBD-A</td><td>15,32</td><td>153,55</td><td>39,89</td><td>211,82</td><td>50,49</td></tr>
+              <tr><td>SSBD-B</td><td>8,00</td><td>88,85</td><td>26,96</td><td>142,08</td><td>34,13</td></tr>
+              <tr><td>SSBD-C</td><td>10,97</td><td>129,03</td><td>28,60</td><td>181,98</td><td>36,21</td></tr>
+              <tr><td>SSBD-D</td><td>23,17</td><td>217,37</td><td>35,55</td><td>225,85</td><td>44,99</td></tr>
+            </table>
+            <p><b>Performa keseluruhan</b> (kekakuan efektif, energi histeresis maksimum, redaman ekivalen — EVDR):</p>
+            <table class="datatable">
+              <tr><th>Spesimen</th><th>K<sub>eff</sub> (kN/mm)</th><th>E<sub>max</sub> (kN·m)</th><th>ξ<sub>max</sub> EVDR (%)</th></tr>
+              <tr><td>SSBD-A</td><td>1,28</td><td>2,04</td><td>31,78</td></tr>
+              <tr><td>SSBD-B</td><td>1,04</td><td>0,97</td><td>31,74</td></tr>
+              <tr><td>SSBD-C</td><td>1,22</td><td>1,28</td><td>29,15</td></tr>
+              <tr><td>SSBD-D</td><td>1,31</td><td>1,19</td><td>23,70</td></tr>
+            </table>
+            <p>Prosedur idealisasi bilinear FEMA 356 yang dipakai untuk mendapat titik (Δ<sub>y</sub>, H<sub>y</sub>) di atas — berbasis konsep luas seimbang (balanced-area), sama persis prinsipnya dengan idealisasi ASCE (2017) yang sudah kamu kenal di Bab G:</p>
+            <div class="formula">
+              <div class="eq">K<sub>e,FEMA</sub> = 0,6F<sub>y</sub> / P<sub>0,6Fy</sub> &nbsp;&nbsp;&nbsp; P<sub>y</sub> = F<sub>y</sub> / K<sub>e</sub></div>
+              <div class="legend-list"><div>Kekakuan efektif diambil dari secant ke titik 0,6F<sub>y</sub> pada kurva backbone; F<sub>y</sub> dicari iteratif sampai luas di atas & di bawah kurva bilinier seimbang dengan kurva aktual</div></div>
+            </div>
+            <div class="callout"><b>Rekomendasi dari paper:</b> SSBD-A (tirus linear) adalah konfigurasi paling seimbang — drift capacity tertinggi (~50%), EVDR tertinggi (~32%), dan mode kegagalannya paling daktail (deformasi plastis merata sepanjang batang, bukan terpusat di satu titik). Ini yang dipakai sebagai basis sistem gabungan SSBD-RB di subtopik berikutnya. SSBD-D (silinder) punya kapasitas gaya tertinggi tapi paling getas — kalau prioritas papermu murni kapasitas gaya maksimum, ini alternatifnya, tapi dengan trade-off daktilitas.</div>
+            <div class="source"><b>Sumber:</b> Draft SSBD-ERB, Putri, Setiawan, Satyarno, Jamasri, Fakhrurrozi — Tabel 3, 4, 5, Pers. 4–9</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Dari backbone ke OpenSees — pemetaan parameter twoNodeLink (contoh SSBD-A)
+            <span class="subtopic-tags"><span class="tag conf">Konf</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Karena titik (Δ<sub>y</sub>, H<sub>y</sub>) dan (Δ<sub>u</sub>, H<sub>u</sub>) di tabel sebelumnya sudah dalam bentuk gaya-perpindahan (bukan tegangan-regangan), turunannya ke parameter <code style="color:var(--line)">Steel01</code> pada twoNodeLink jadi langsung, memakai logika yang sama seperti SPD di subtopik sebelumnya:</p>
+            <div class="formula">
+              <div class="eq">E<sub>0</sub> = H<sub>y</sub> / Δ<sub>y</sub> &nbsp;&nbsp;(kekakuan elastis awal)</div>
+              <div class="eq">K<sub>h</sub> = (H<sub>u</sub> − H<sub>y</sub>) / (Δ<sub>u</sub> − Δ<sub>y</sub>) &nbsp;&nbsp;(kekakuan pasca-leleh)</div>
+              <div class="eq">b = K<sub>h</sub> / E<sub>0</sub> &nbsp;&nbsp;(rasio strain-hardening)</div>
+            </div>
+            <p>Contoh numerik pakai data SSBD-A (rata-rata arah positif & negatif):</p>
+            <div class="codemap">
+<span class="cm-label">Ilustrasi perhitungan — verifikasi ulang sebelum dipakai di model final</span>Δy ≈ 15,33 mm    Hy ≈ 155,9 kN
+Δu ≈ 39,98 mm    Hu ≈ 214,0 kN
+
+E0 = 155,9 / 15,33     ≈ 10,17 kN/mm  = 10.170 N/mm
+Kh = (214,0-155,9) / (39,98-15,33) ≈ 2,36 kN/mm = 2.358 N/mm
+b  = Kh / E0            ≈ 0,232
+
+uniaxialMaterial Steel01 $matTag  155900  10170  0.232
+element twoNodeLink $eleTag $iNode $jNode -mat $matTag -dir 1</div>
+            <p>Catatan: E<sub>0</sub> di sini konsisten dengan prosedur idealisasi FEMA 356 sendiri (K<sub>e</sub>=F<sub>y</sub>/P<sub>y</sub>, lihat subtopik sebelumnya) — bukan pendekatan pintas, tapi memang itulah cara resmi paper ini menurunkan titik lelehnya.</p>
+            <div class="callout"><b>Kapan Steel01 tidak cukup:</b> Steel01 mengasumsikan kurva simetris & tanpa pinching. Data SSBD-A arah positif vs negatif cukup dekat (Δy 15,32 vs -15,33; Hy 153,55 vs -158,21) sehingga bilinear simetris masih wajar. Tapi kalau kamu perlu menangkap bentuk loop histeresis yang lebih detail (misal ada indikasi pinching dari grafik hasil uji), pertimbangkan material <code style="color:var(--line)">Hysteretic</code> di OpenSees — menerima banyak titik kontrol per arah (termasuk degradasi kekuatan/kekakuan), lebih fleksibel dari Steel01 bilinear murni.</div>
+            <div class="source"><b>Sumber:</b> diturunkan dari Draft SSBD-ERB Tabel 4 · logika pemetaan sama seperti Darmawan §3.6</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            SSBD-RB — kombinasi SSBD+ERB, dan satu pertanyaan terbuka soal gap
+            <span class="subtopic-tags"><span class="tag conf">Konf</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Draft paper ini juga mengusulkan sistem terintegrasi bernama <b>SSBD-RB</b> (Stainless Steel Bar Damper – Rubber Bearing): satu unit isolator hibrida terdiri dari pelat atas, pelat bawah, satu ERB di tengah, dan beberapa batang SSBD tersusun simetris <i>mengelilingi</i> ERB tersebut — bukan dua komponen terpisah seperti sistem SPD+ERB+stopper di Haroki/Darmawan.</p>
+            <p>Metode menggabungkan responsnya: <b>superposisi langsung</b> — respons ERB (dievaluasi pada perpindahan setara 150% tebal total karetnya) dijumlahkan dengan kurva bilinear SSBD-A hasil idealisasi FEMA 356. Studi kasus memakai dimensi ERB yang sama persis dengan ERB di jembatan HSOP Haroki (200×250 mm, tebal karet total 32 mm), dikombinasikan dengan SSBD-A tinggi efektif 79 mm.</p>
+            <div class="formula">
+              <div class="eq">F<sub>SSBD-RB</sub>(δ) = F<sub>ERB</sub>(δ) + F<sub>SSBD-A,bilinear</sub>(δ)</div>
+            </div>
+            <p>Hasilnya: kapasitas gaya lateral naik ~300% dibanding ERB sendirian, dengan konsekuensi drift maksimum yang bisa dicapai jadi lebih kecil dari ERB sendirian (karena SSBD membatasi deformasi sebelum ERB mencapai batasnya). Studi ini juga mencatat temuan penting: pada analisis riwayat waktu nonlinier, ERB <i>sendirian</i> (tanpa damper tambahan) sering melampaui batas layannya (regangan geser 50%) di bawah beban operasional — artinya ERB sendirian memang tidak cukup, dan ini yang jadi alasan utama kenapa kombinasi dengan SSBD diperlukan.</p>
+            <div class="callout"><b>Perlu diklarifikasi ke Pak Angga — ini koreksi penting atas asumsi sebelumnya:</b> subtopik "Mekanisme gap" di atas menjelaskan skema SPD+ERB Haroki/Darmawan yang memakai <b>gap eksplisit</b> (elemen gap diserikan dengan material damper). Tapi deskripsi SSBD-RB di draft ini <b>tidak menyebutkan gap sama sekali</b> — responsnya murni superposisi paralel dari awal, konsisten dengan prinsip umum "SPD dan ERB tersusun paralel" (K<sub>1</sub>=K<sub>H</sub>+K<sub>ef</sub>) yang juga disebut di tesis Emilidardi. Ini masuk akal secara fisik: baja tahan karat Grade 304 punya ketahanan fatik & korosi jauh lebih baik dari baja mutu rendah biasa, jadi mungkin memang didesain untuk tahan siklus beban harian tanpa perlu gap pelindung.<br><br>
+            Tapi ini <b>belum tentu berarti skema bridge-scale kamu (dengan SSBD-ERB, bukan SSBD-RB murni) juga tanpa gap</b> — brief awal proyekmu eksplisit menyebut gap 10 mm. Jangan asumsikan salah satu; tanyakan langsung: apakah gap tetap dipakai di implementasi jembatanmu, atau filosofi desainnya sudah berubah ke superposisi paralel penuh seperti SSBD-RB ini?</div>
+            <p>Implikasi ke topologi OpenSees-mu — <b>ini juga beda dari yang saya sampaikan sebelumnya</b>: kalau ternyata tanpa gap, ERB dan SSBD jadi <b>dua elemen paralel</b> di titik yang sama (dua twoNodeLink terpisah menghubungkan node yang sama, atau satu link dengan material <code style="color:var(--line)">Parallel</code> yang menggabungkan material elastis ERB + material histeretik SSBD) — bukan <code style="color:var(--line)">Series</code> dengan gap seperti skema SPD. Dua topologi ini punya konsekuensi mekanis yang cukup berbeda, jadi keputusan ini sebaiknya dikonfirmasi sebelum kamu bangun model final untuk paper konferensi.</p>
+            <div class="source"><b>Sumber:</b> Draft SSBD-ERB §"Application"/Figure 19–20 · bandingkan dengan Haroki §4.6.5 dan Emilidardi §3.4 Pers. 3.28</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Elastomeric Rubber Bearing (ERB) — rumus kekakuan
+            <span class="subtopic-tags"><span class="tag conf">Konf</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>ERB adalah tumpuan karet berlapis yang menahan beban servis (dan sedikit beban gempa) sambil mengizinkan deformasi geser terbatas. Empat kekakuan yang perlu dihitung:</p>
+            <div class="formula">
+              <div class="eq">k<sub>v</sub> = EA / H<sub>e</sub> &nbsp;(vertikal) &nbsp;&nbsp;&nbsp; k<sub>h</sub> = GA / H<sub>e</sub> &nbsp;(horizontal)</div>
+              <div class="eq">k<sub>θ</sub> = 4EI / H<sub>e</sub> &nbsp;(rotasi) &nbsp;&nbsp;&nbsp; k<sub>t</sub> = GJ / H<sub>e</sub> &nbsp;(torsi)</div>
+              <div class="legend-list"><div><b>E</b> = 4,8·G·S² (modulus tekan elastomer, tergantung faktor bentuk S) &nbsp; <b>S</b> = BL / [2e(B+L)] (shape factor) &nbsp; <b>H<sub>e</sub></b> = tebal total elastomer</div></div>
+            </div>
+            <p>Batas regangan geser ERB penting untuk menentukan kapan ERB dianggap gagal: berdasarkan Eurocode, ERB diizinkan berdeformasi sampai regangan geser 200%; hasil eksperimen menunjukkan ERB masih elastis sampai 250–300%. Ini jadi acuan menentukan kapasitas ultimit link element ERB-mu.</p>
+            <div class="source"><b>Sumber:</b> Haroki §3.8 Pers. 3.52–3.58 · Eurocode (2005) · Furuta & Araki (2004) · Han dkk. (2013)</div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ================= F ================= -->
+      <section class="topic" id="F">
+        <div class="topic-header">
+          <div class="topic-letter">F</div>
+          <div class="topic-title">
+            <h2>Ground Motion & Scaling</h2>
+            <p class="desc">Menyiapkan "beban gempa" yang representatif untuk NLTHA — bagian yang bisa dikerjakan paralel sambil menunggu data lain.</p>
+          </div>
+        </div>
+        <div class="topic-meta">
+          <span><b>Sumber utama:</b> Haroki §3.12, §4.7; SNI 2833:2016 §6.3.4</span>
+          <span><b>Wajib untuk:</b> Konferensi (NLTHA) · relevan untuk Tesis kalau NLTHA dipakai dalam training data</span>
+        </div>
+
+        <details class="subtopic" open>
+          <summary class="subtopic-head">
+            Kenapa perlu rekaman sintetis, dan cara memilihnya
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Data rekaman gempa asli di Indonesia masih terbatas untuk kebanyakan lokasi. Solusinya: pinjam rekaman dari lokasi lain di dunia yang <b>karakteristik seismiknya mirip</b>, lalu skalakan ke target spektra desain lokasimu. Parameter kemiripan yang harus dicek:</p>
+            <ul>
+              <li><b>Mekanisme sumber gempa</b> — mis. sesar dangkal (shallow crustal) vs subduksi.</li>
+              <li><b>Magnitude (M<sub>w</sub>)</b> — cari rekaman dengan magnitude yang sebanding dengan skenario gempa desain di situsmu.</li>
+              <li><b>Kelas situs</b> — jenis tanah rekaman asli sebaiknya sama/mirip kelas situs lokasimu.</li>
+              <li><b>Jarak sumber-situs (R)</b> — mempengaruhi karakter frekuensi & durasi rekaman.</li>
+            </ul>
+            <p>Contoh: Yogyakarta punya sumber gempa dominan sesar Opak (shallow crustal) — Haroki & Darmawan mencari rekaman dari sumber gempa dengan mekanisme serupa di seluruh dunia (contoh dipakai: El Alamo, Big Bear, Borrego Mtn, Imperial Valley, Kobe, Kocaeli, Superstition Hills).</p>
+            <div class="source"><b>Sumber:</b> Haroki §3.12 · SNI 2833:2016 §6.3.4.1 · Aprillianto dkk. (2016)</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Prosedur scaling amplitudo ke spektra target
+            <span class="subtopic-tags"><span class="tag conf">Konf</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Setelah rekaman kandidat terpilih, tiap rekaman diberi faktor skala amplitudo supaya <b>respons spektra rerata</b> dari seluruh set rekaman mendekati/melampaui spektra target desain pada rentang periode yang relevan dengan struktur (biasanya sekitar periode fundamentalnya). Faktor skala tiap rekaman bisa sangat bervariasi — ini normal, karena tiap rekaman asli punya intensitas & karakter frekuensi berbeda:</p>
+            <table class="datatable">
+              <tr><th>Gempa</th><th>Tahun</th><th>Faktor skala — Longitudinal</th><th>Faktor skala — Transversal</th></tr>
+              <tr><td>El Alamo</td><td>1956</td><td>10,50</td><td>9,80</td></tr>
+              <tr><td>Big Bear</td><td>1992</td><td>2,70</td><td>3,50</td></tr>
+              <tr><td>Kobe</td><td>1995</td><td>4,00</td><td>5,70</td></tr>
+              <tr><td>Kocaeli</td><td>1999</td><td>2,20</td><td>1,92</td></tr>
+            </table>
+            <p>SNI 2833:2016 mensyaratkan minimum tujuh pasang rekaman gempa untuk bisa memakai nilai <i>rerata</i> respons sebagai hasil analisis (kalau kurang dari itu, kode meminta nilai <i>envelope maksimum</i>, yang jauh lebih konservatif). Ini alasan kenapa Haroki, Darmawan, dan Emilidardi konsisten pakai tujuh pasang rekaman.</p>
+            <div class="source"><b>Sumber:</b> Haroki §4.7, Tabel 4.11 · SNI 2833:2016 §6.3.4</div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ================= G ================= -->
+      <section class="topic" id="G">
+        <div class="topic-header">
+          <div class="topic-letter">G</div>
+          <div class="topic-title">
+            <h2>Metode Analisis Berjenjang</h2>
+            <p class="desc">Urutan wajib: Modal → Pushover → (Cyclic) → NLTHA — jangan loncat langsung ke NLTHA sebelum tahap sebelumnya "lolos".</p>
+          </div>
+        </div>
+        <div class="topic-meta">
+          <span><b>Sumber utama:</b> Haroki §5.1; Hidayat §Cyclic Analysis; Darmawan §4.3.2.3</span>
+          <span><b>Skripsi:</b> cukup sampai pushover/cyclic · <b>Konferensi & Tesis:</b> wajib sampai NLTHA</span>
+        </div>
+
+        <details class="subtopic" open>
+          <summary class="subtopic-head">
+            Modal → Pushover → NLTHA: fungsi tiap tahap
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag skripsi">Skripsi</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <ul>
+              <li><b>Modal analysis</b> — cari periode natural & bentuk ragam getar. Ini "sanity check" pertama: kalau periode hasilnya ganjil (misal jauh lebih kaku/lentur dari perkiraan awal), ada yang salah di model sebelum kamu lanjut ke tahap lain.</li>
+              <li><b>Pushover analysis</b> — dorong struktur secara statis sampai target displacement, hasilkan kurva force-displacement & diagram momen sepanjang elemen. Dipakai ganda: (a) kalibrasi fixity depth, (b) cek kapasitas & urutan leleh elemen.</li>
+              <li><b>Cyclic loading (opsional, tergantung tujuan)</b> — beban bolak-balik dengan drift ratio meningkat bertahap, protokol umum ACI 374.1-05. Dipakai untuk evaluasi energi disipasi & damping ratio tanpa perlu rekaman gempa asli — cocok untuk studi banding desain cepat (Hidayat pakai ini, tanpa NLTHA sama sekali).</li>
+              <li><b>NLTHA (nonlinear time history analysis)</b> — level paling detail, pakai rekaman gempa asli/terskala sebagai input langsung. Hasilnya time-series lengkap tiap step waktu, dari situ ditarik nilai puncak (displacement, base shear, kurvatur) dan breakdown energi.</li>
+            </ul>
+            <p>Untuk membaca kurva pushover secara kuantitatif (mencari titik leleh efektif V<sub>y</sub>, Δ<sub>y</sub>), dipakai idealisasi bilinear ASCE (2017) — garis kedua ditarik sedemikian rupa sehingga luas area di atas dan di bawah kurva aktual kira-kira seimbang, titik potongnya jadi (V<sub>y</sub>, Δ<sub>y</sub>).</p>
+            <div class="source"><b>Sumber:</b> Haroki §3.7.2 Gambar 3.20 · Hidayat dkk. (2024) §Cyclic Analysis · ACI 374.1-05</div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ================= H ================= -->
+      <section class="topic" id="H">
+        <div class="topic-header">
+          <div class="topic-letter">H</div>
+          <div class="topic-title">
+            <h2>Variabel Pembanding Performa Seismik & Teori Dasarnya</h2>
+            <p class="desc">Bab ini menjawab: dari satu analisis NLTHA/pushover yang sama, angka apa saja yang sebenarnya ditarik dan dibandingkan — dan teori di balik tiap angka itu.</p>
+          </div>
+        </div>
+        <div class="topic-meta">
+          <span><b>Sumber utama:</b> Haroki §5.1–5.4; Emilidardi §3.5; Darmawan §5.1; 4101114282PB §3; Draft SSBD-ERB; Paulay & Priestley (1992)</span>
+          <span><b>Wajib untuk:</b> ketiga proyek — ini kerangka baca hasil, dipakai di setiap laporan/paper</span>
+        </div>
+
+        <details class="subtopic" open>
+          <summary class="subtopic-head">
+            Peta variabel — apa yang dibandingkan tiap peneliti, dan untuk apa
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag skripsi">Skripsi</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Sebelum masuk teori tiap variabel satu-satu, ini peta besarnya — supaya kamu tahu variabel mana yang wajib kamu laporkan di papermu, dan variabel mana yang sifatnya pelengkap tergantung fokus studi.</p>
+            <table class="datatable">
+              <tr><th>Variabel</th><th>Mengukur apa</th><th>Dipakai oleh</th></tr>
+              <tr><td>Periode fundamental (T)</td><td>Kekakuan global struktur</td><td>Keempat riset</td></tr>
+              <tr><td>Kurva pushover (force-displacement)</td><td>Kapasitas lateral & titik leleh efektif</td><td>Keempat riset</td></tr>
+              <tr><td>Base shear / gaya geser dasar</td><td>Demand global akibat gempa</td><td>Haroki, Darmawan</td></tr>
+              <tr><td>Perpindahan (displacement) tiang/pier</td><td>Penentu utama level performa seismik</td><td>Keempat riset</td></tr>
+              <tr><td>Percepatan respons</td><td>Energi kinetik struktur</td><td>Haroki</td></tr>
+              <tr><td>Kecepatan respons</td><td>Energi redaman viskos</td><td>Haroki</td></tr>
+              <tr><td>Momen-kurvatur sendi plastis</td><td>Perilaku inelastis penampang & energi histeretik</td><td>Keempat riset</td></tr>
+              <tr><td>Lokasi & panjang sendi plastis</td><td>Di mana dan seberapa luas kerusakan terjadi</td><td>Emilidardi, 4101114282PB, Haroki</td></tr>
+              <tr><td>Daktilitas kurvatur (μ<sub>φ</sub>)</td><td>Kapasitas deformasi inelastis penampang</td><td>Emilidardi, Darmawan</td></tr>
+              <tr><td>Level performa seismik</td><td>Klasifikasi tingkat kerusakan (MD/CRD/LSP atau O/IO/LS/CP)</td><td>Keempat riset</td></tr>
+              <tr><td>Rasio D/C (demand/capacity)</td><td>Kecukupan desain penampang</td><td>4101114282PB</td></tr>
+              <tr><td>Energi disipasi & breakdown-nya</td><td>Kontribusi damper vs struktur dalam meredam gempa</td><td>Haroki, Darmawan, Hidayat</td></tr>
+              <tr><td>Rasio redaman ekivalen (EVDR/ξ<sub>eq</sub>)</td><td>Efisiensi redaman siklik damper</td><td>Darmawan, Hidayat</td></tr>
+              <tr><td>Jumlah tiang & efisiensi fondasi</td><td>Penghematan material</td><td>Keempat riset</td></tr>
+              <tr><td>Biaya konstruksi</td><td>Kelayakan ekonomis desain</td><td>Hidayat</td></tr>
+              <tr><td>Kekakuan efektif (stiffness ratio)</td><td>Perbandingan kekakuan antar konfigurasi</td><td>Hidayat, Draft SSBD-ERB</td></tr>
+            </table>
+            <div class="callout"><b>Cara pakai peta ini:</b> untuk paper konferensimu, minimal wajib laporkan periode, kurva pushover, level performa seismik, momen-kurvatur + lokasi sendi plastis, dan breakdown energi disipasi — ini "paket standar" yang selalu muncul di keempat riset acuan. Variabel lain (biaya, D/C ratio, EVDR) sifatnya menguatkan argumen tapi tidak selalu wajib ada di semua studi.</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Sendi plastis (plastic hinge) — definisi, lokasi, dan panjang efektif
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag skripsi">Skripsi</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Sendi plastis adalah mekanisme rotasi yang terjadi di daerah momen besar pada elemen struktur, ketika tulangan/material sudah melampaui regangan lelehnya (Ou dkk., 2012, dikutip di Emilidardi §3.5). Ini bukan "sendi" fisik seperti engsel — istilah ini menggambarkan bagaimana penampang berperilaku nonlinear (ditangkap lewat hubungan momen-kurvatur) di lokasi tertentu sepanjang elemen, akibat beban besar.</p>
+            <p>Ada dua cara memodelkannya:</p>
+            <ul>
+              <li><b>Lumped plasticity</b> — sendi plastis dipusatkan di satu titik diskrit pada elemen. Lebih cepat komputasinya, tapi kurang presisi soal distribusi kerusakan riil.</li>
+              <li><b>Distributed plasticity</b> — plastisitas disebar sepanjang elemen. Ini yang secara alami kamu dapatkan dari elemen <code style="color:var(--line)">forceBeamColumn</code> + fiber section + integrasi Gauss-Lobatto (lihat Bab B, C) — pendekatan yang dipakai keempat riset acuanmu untuk tiang.</li>
+            </ul>
+            <p><b>Lokasi:</b> untuk tiang tertanam (seperti pada SOP/SHSPG), ASCE 61-14 menyatakan sendi plastis kritis muncul di <b>dua titik</b>: dekat sambungan dengan struktur atas (ujung atas tiang) dan di titik jepit (fixity point) di dalam tanah. Ini dikonfirmasi langsung oleh diagram momen Haroki — momen terbesar memang muncul persis di dua lokasi itu.</p>
+            <p><b>Panjang sendi plastis (L<sub>p</sub>)</b> — dua formula berbeda dipakai di riset acuanmu, untuk konteks berbeda:</p>
+            <div class="formula">
+              <div class="eq">L<sub>p</sub> = 0,08L + 0,022·f<sub>ye</sub>·d<sub>bl</sub> &nbsp;≥&nbsp; 0,044·f<sub>ye</sub>·d<sub>bl</sub> &nbsp;&nbsp;(AASHTO 2011 — kolom/pier RC biasa)</div>
+              <div class="eq">L<sub>p</sub> = 1,4D &nbsp;&nbsp;(Benzoni, Budek & Priestley 1997 — khusus spun pile berongga prategang)</div>
+              <div class="legend-list"><div><b>L</b> = tinggi pier &nbsp; <b>f<sub>ye</sub></b> = tegangan leleh aktual tulangan longitudinal &nbsp; <b>d<sub>bl</sub></b> = diameter tulangan longitudinal &nbsp; <b>D</b> = diameter tiang</div></div>
+            </div>
+            <p>Formula AASHTO dipakai Emilidardi untuk pier PCI-girder (RC solid biasa); formula 1,4D dipakai Darmawan untuk validasi spesimen spun pile Irawan dkk. (2018) — lebih relevan langsung untuk risetmu karena strukturnya sama-sama spun pile berongga.</p>
+
+            <h4>Mekanisme fisik — kenapa sendi plastis terbentuk di lokasi tertentu</h4>
+            <p>Ini yang sering dilewatkan: sendi plastis bukan sesuatu yang "ditempatkan", dia <b>muncul sendiri</b> di lokasi yang paling dulu kehabisan kapasitas elastisnya. Urutannya:</p>
+            <ol>
+              <li>Beban lateral membuat distribusi momen sepanjang tiang — dari statika struktur (bukan dari material), lokasi momen terbesar sudah bisa diprediksi lebih dulu (dekat sambungan ke pile head, dan di titik jepit).</li>
+              <li>Di lokasi momen terbesar itu, serat terluar penampang (asumsi bidang datar tetap datar / plane sections remain plane) mencapai regangan leleh <b>lebih dulu</b> dibanding serat-serat di dekat sumbu netral.</li>
+              <li>Begitu serat terluar leleh, kekakuan lentur <i>lokal</i> di titik itu turun drastis (karena hubungan tegangan-regangan material sudah masuk fase nonlinear) — sementara elemen di sekitarnya (yang belum leleh) masih kaku penuh.</li>
+              <li>Konsekuensinya: rotasi tambahan akibat beban berikutnya jadi <b>terkonsentrasi</b> di titik yang sudah leleh itu, bukan tersebar merata — persis seperti engsel mekanis, meski secara fisik tidak ada sambungan yang benar-benar terpisah.</li>
+            </ol>
+            <p>Dari sini, kapasitas rotasi sendi plastis (θ<sub>p</sub>) bisa dihitung langsung dari kurvatur — inilah jembatan yang menghubungkan Bab B (fiber section, momen-kurvatur) ke perpindahan global yang kamu baca di hasil NLTHA:</p>
+            <div class="formula">
+              <div class="eq">θ<sub>p</sub> = L<sub>p</sub> (φ<sub>u</sub> − φ<sub>y</sub>)</div>
+              <div class="eq">Δ<sub>p</sub> ≈ θ<sub>p</sub> × L<sub>c</sub></div>
+              <div class="legend-list"><div><b>θ<sub>p</sub></b> = rotasi plastis di sendi &nbsp; <b>L<sub>c</sub></b> = jarak dari sendi ke titik yang perpindahannya kamu ukur (mis. puncak tiang) &nbsp; <b>Δ<sub>p</sub></b> = kontribusi perpindahan akibat rotasi plastis di sendi tersebut</div></div>
+            </div>
+
+            <h4>Kenapa bisa muncul di dua lokasi sekaligus</h4>
+            <p>Sistem SOP/SHSPG itu statis tak tentu (redundant) — tiang tertanam punya lebih dari satu kemungkinan lokasi leleh. Begitu sendi plastis pertama terbentuk (biasanya di lokasi momen terbesar), kekakuan lokal di situ turun, dan <b>momen yang "seharusnya" mengalir ke situ malah redistribusi ke lokasi kritis kedua</b> — inilah alasan ASCE 61-14 secara eksplisit mengharapkan dua sendi (ujung atas + titik jepit) pada tiang tertanam, bukan cuma satu. Redistribusi ini juga yang membuat topik skripsimu (pile cap tambahan at-grade) relevan: begitu kamu tambah satu titik kekangan baru, pola redistribusi ini berubah total — bisa jadi muncul kandidat lokasi sendi ketiga, atau salah satu dari dua lokasi lama jadi tidak lagi kritis.</p>
+
+            <h4>Kenapa daktilitas bisa "habis" — mekanisme degradasi siklik</h4>
+            <p>Di bawah beban siklik (bukan cuma satu arah), sendi plastis mengalami dua mekanisme kerusakan progresif yang saling berkaitan:</p>
+            <ul>
+              <li><b>Tekuk tulangan (bar buckling)</b> — begitu tulangan/PC bar leleh tekan di satu setengah-siklus, dan spasi sengkang/spiral pengekang tidak cukup rapat, batang itu bisa menekuk (buckle). Saat arah beban dibalik (batang sekarang tertarik), batang yang sudah menekuk mengalami konsentrasi regangan di titik tekukan — dan bisa fraktur pada level daktilitas yang jauh lebih rendah dari batang lurus.</li>
+              <li><b>Crushing beton progresif</b> — inti beton di zona sendi retak dan hancur sedikit demi sedikit tiap siklus, mengurangi luas efektif penampang yang masih bisa menahan tekan.</li>
+            </ul>
+            <p>Dua mekanisme ini adalah <b>penyebab fisik langsung</b> dari fenomena yang kamu lihat di kurva histeretik sebagai "loop mengecil antar siklus" atau "pinching" (lihat subtopik berikutnya) — bukan kebetulan, tapi akibat langsung dari kerusakan progresif di sendi plastis itu sendiri. Ini juga kenapa spasi sengkang/spiral di <i>zona sendi plastis</i> biasanya dibuat lebih rapat dibanding sepanjang elemen lainnya — bukan cuma soal mengekang inti beton, tapi juga menahan tulangan longitudinal supaya tidak menekuk.</p>
+
+            <div class="callout"><b>Peringatan penting — sendi plastis cuma berlaku kalau lentur yang mengontrol:</b> seluruh teori daktilitas & disipasi energi lewat sendi plastis di atas mengasumsikan penampang mencapai <b>kapasitas lentur</b>-nya duluan, sebelum kapasitas gesernya. Kalau kapasitas geser tercapai lebih dulu (tulangan geser kurang, atau elemen pendek/gemuk dengan rasio geser-momen tinggi), elemen gagal getas lewat retak diagonal — <b>tanpa</b> pernah membentuk sendi plastis yang daktail. Prinsip desain kapasitas (capacity design) mensyaratkan kapasitas geser penampang harus melebihi gaya geser yang terjadi <i>saat momen plastis penuh tercapai</i> (Mp), bukan cuma gaya geser dari analisis elastis biasa — ini pengecekan terpisah yang wajib dilakukan, bukan otomatis terjamin oleh pemodelan fiber section semata.</div>
+            <div class="callout"><b>Mekanisme kegagalan spesifik spun pile:</b> karena berongga dan prategang, spun pile bisa gagal lewat dua jalur berbeda — <b>fraktur batang PC (PC bar fracture)</b> atau <b>crushing beton di serat tekan</b>, tergantung mana yang lebih dulu mencapai batas regangannya. Riset acuanmu konsisten menemukan beton yang mencapai batas lebih dulu (lihat subtopik "Level performa" di bawah) — tapi ini bukan aturan universal, harus dicek ulang tiap kali parameter materialmu berubah.</div>
+            <div class="source"><b>Sumber:</b> Emilidardi §3.5 Pers. 3.35 · Darmawan/document.pdf §4.3.4.3 · Benzoni, Budek & Priestley (1997) · Ou dkk. (2012) · Paulay & Priestley (1992) — mekanisme bar buckling & capacity design</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Kurva histeretik — definisi, cara mendapatkan, cara membaca
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Kurva histeretik adalah plot <b>gaya vs perpindahan</b> (atau momen vs kurvatur di level penampang — lihat subtopik Momen-kurvatur berikutnya) dari elemen yang dibebani <b>siklik</b> — bolak-balik, bukan satu arah seperti pushover monotonic biasa.</p>
+            <p>Bedanya dengan pushover: kalau elemen didorong satu arah terus sampai gagal, kurvanya cuma satu garis. Tapi begitu arah pembebanan dibalik <i>sebelum</i> elemen gagal, jalur "pulang" (unloading) <b>tidak</b> melewati jalur yang sama dengan jalur "pergi" (loading) — karena material sudah mengalami deformasi plastis permanen. Selisih dua jalur inilah yang membentuk loop tertutup. Nama "histeretik" berasal dari histerisis: respons yang bergantung pada riwayat pembebanan sebelumnya, bukan cuma kondisi seketika.</p>
+
+            <h4>Cara mendapatkan</h4>
+            <ul>
+              <li><b>Eksperimen</b> — spesimen dipasang di rig uji dengan aktuator hidrolik yang menggerakkan perpindahan sesuai protokol tertentu (amplitudo meningkat bertahap, biasanya 2–3 siklus per level — persis protokol yang dipakai uji SSBD di Bab E). Load cell merekam gaya reaksi, LVDT merekam perpindahan, disinkronkan tiap step waktu.</li>
+              <li><b>Numerik (OpenSees)</b> — bukan pushover satu arah, tapi <b>cyclic pushover</b>: integrator displacement control dengan riwayat target perpindahan naik-turun (di-generate sebagai array/loop di Tcl/Python). Untuk keperluan validasi ke data eksperimen, protokolnya harus <b>identik persis</b> — jumlah siklus dan amplitudo tiap level harus sama, kalau tidak hasilnya tidak bisa dibandingkan apple-to-apple.</li>
+            </ul>
+
+            <h4>Anatomi loop — cara membaca</h4>
+            <div class="diagram">
+              <svg viewBox="0 0 680 450" role="img" aria-label="Diagram anatomi kurva histeretik gaya-perpindahan">
+                <defs>
+                  <marker id="ah1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+                  <marker id="ah1n" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="var(--line-dim)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+                </defs>
+                <line x1="90" y1="220" x2="600" y2="220" stroke="var(--line-dim)" stroke-width="1" marker-end="url(#ah1n)"/>
+                <line x1="340" y1="420" x2="340" y2="50" stroke="var(--line-dim)" stroke-width="1" marker-end="url(#ah1n)"/>
+                <text x="592" y="238" text-anchor="end" font-family="var(--font-mono)" font-size="12" fill="var(--text-dim)">perpindahan, δ</text>
+                <text x="348" y="60" font-family="var(--font-mono)" font-size="12" fill="var(--text-dim)">gaya, F</text>
+                <polygon points="400,140 480,100 280,367 200,407" fill="var(--gold)" opacity="0.15"/>
+                <path d="M340,220 L400,140" fill="none" stroke="var(--text-faint)" stroke-width="1.2" stroke-dasharray="4 3"/>
+                <circle cx="340" cy="220" r="3" fill="var(--text-faint)"/>
+                <text x="322" y="214" text-anchor="end" font-family="var(--font-mono)" font-size="12" fill="var(--text-dim)">O</text>
+                <path d="M400,140 L480,100" fill="none" stroke="var(--gold)" stroke-width="2" marker-end="url(#ah1)"/>
+                <path d="M480,100 L280,367" fill="none" stroke="var(--gold)" stroke-width="2" marker-end="url(#ah1)"/>
+                <path d="M280,367 L200,407" fill="none" stroke="var(--gold)" stroke-width="2" marker-end="url(#ah1)"/>
+                <path d="M200,407 L400,140" fill="none" stroke="var(--gold)" stroke-width="2" marker-end="url(#ah1)"/>
+                <circle cx="400" cy="140" r="4" fill="var(--gold)"/>
+                <circle cx="480" cy="100" r="4" fill="var(--gold)"/>
+                <circle cx="280" cy="367" r="4" fill="var(--gold)"/>
+                <circle cx="200" cy="407" r="4" fill="var(--gold)"/>
+                <text x="416" y="122" font-family="var(--font-mono)" font-size="13" fill="var(--text)">A</text>
+                <text x="492" y="88" font-family="var(--font-mono)" font-size="13" fill="var(--text)">B</text>
+                <text x="244" y="382" font-family="var(--font-mono)" font-size="13" fill="var(--text)">A′</text>
+                <text x="168" y="418" font-family="var(--font-mono)" font-size="13" fill="var(--text)">B′</text>
+                <circle cx="360" cy="270" r="2.5" fill="var(--text-faint)"/>
+                <line x1="360" y1="270" x2="458" y2="270" stroke="var(--text-faint)" stroke-width="0.8" stroke-dasharray="2 3"/>
+                <text x="462" y="274" font-family="var(--font-mono)" font-size="12" fill="var(--amber)">E_dis</text>
+              </svg>
+              <div class="diagram-caption">O→A: pembebanan awal (K₀) · A→B: pasca-leleh · B→A′→B′: unloading &amp; leleh sisi negatif · B′→A: reloading · area gold = energi disipasi</div>
+            </div>
+            <table class="datatable">
+              <tr><th>Titik/bagian</th><th>Arti</th></tr>
+              <tr><td>O</td><td>Kondisi awal diam (virgin, belum pernah dibebani)</td></tr>
+              <tr><td>O→A (putus-putus)</td><td>Pembebanan pertama, garis lurus kemiringan K₀ (kekakuan elastis awal)</td></tr>
+              <tr><td>A</td><td>Titik leleh — kurva mulai membelok, bukan garis lurus lagi</td></tr>
+              <tr><td>A→B</td><td>Cabang pasca-leleh, kemiringan lebih landai (strain hardening)</td></tr>
+              <tr><td>B</td><td>Titik puncak siklus itu (peak force pada amplitudo tersebut)</td></tr>
+              <tr><td>B→A′</td><td><b>Unloading</b> — gaya turun dengan kemiringan ≈K₀ lagi (bukan mengikuti jalur A→B), sampai leleh di sisi negatif</td></tr>
+              <tr><td>A′→B′</td><td>Pasca-leleh sisi negatif, simetris dengan A→B</td></tr>
+              <tr><td>B′→A</td><td><b>Reloading</b>, menutup loop kembali ke titik leleh positif</td></tr>
+              <tr><td>Area yang diarsir</td><td>Energi disipasi satu siklus penuh (E<sub>dis</sub>) — luas geometris loop, bukan simbolis</td></tr>
+            </table>
+            <p>Diagram di atas menggambarkan bentuk ideal (bilinear kinematic hardening — persis model Steel01 yang dipakai untuk SPD/SSBD). Data uji riil biasanya tidak serapi ini — ada kelengkungan, bukan garis lurus tegas.</p>
+
+            <h4>Interpretasi bentuk loop</h4>
+            <table class="datatable">
+              <tr><th>Bentuk loop</th><th>Artinya</th></tr>
+              <tr><td>Gemuk, penuh, simetris</td><td>Disipasi energi bagus, daktail, stabil — ini SSBD-A ("stable, full, nearly symmetric")</td></tr>
+              <tr><td>Terjepit (pinching, menyempit dekat origin)</td><td>Ada mekanisme slip — tulangan-beton, celah komponen, atau baut longgar</td></tr>
+              <tr><td>Mengecil progresif antar siklus (amplitudo sama)</td><td><i>Strength degradation</i> — kerusakan bertambah tiap pengulangan (akibat bar buckling/crushing progresif, lihat subtopik sebelumnya)</td></tr>
+              <tr><td>Kemiringan unloading makin landai antar siklus</td><td><i>Stiffness degradation</i> — elemen makin "lembek", belum tentu kekuatannya turun</td></tr>
+              <tr><td>Terputus tiba-tiba (bukan mengecil bertahap)</td><td>Indikasi fraktur getas — ini yang muncul di SSBD-C (fraktur di kepala) atau SSBD-D (fraktur di ujung jepit)</td></tr>
+              <tr><td>Asimetris (positif ≠ negatif)</td><td>Efek P-delta, ketidaksimetrisan geometri, atau residual deformation dari siklus sebelumnya</td></tr>
+            </table>
+            <div class="source"><b>Sumber:</b> Draft SSBD-ERB (bentuk loop 4 konfigurasi) · Chen, Ge & Usami (2006) · Darmawan §3.6</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Backbone curve — dari histeretik ke idealisasi bilinear
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Backbone curve <b>bukan kurva terpisah</b> — dia diturunkan langsung dari kurva histeretik penuh di atas: tinggal sambungkan titik puncak (B, B′, dan puncak-puncak di tiap level amplitudo berikutnya) dari semua siklus. Histeretik curve = data mentah lengkap dengan loop-nya; backbone = ringkasannya, dipakai untuk idealisasi bilinear FEMA 356 (F<sub>y</sub>, Δ<sub>y</sub>, F<sub>u</sub>, Δ<sub>u</sub>) yang sudah kamu pakai menurunkan parameter Steel01 untuk SSBD di Bab E.</p>
+            <div class="formula">
+              <div class="eq">K<sub>e,FEMA</sub> = 0,6F<sub>y</sub> / P<sub>0,6Fy</sub> &nbsp;&nbsp;&nbsp; P<sub>y</sub> = F<sub>y</sub> / K<sub>e</sub></div>
+              <div class="legend-list"><div>Kekakuan efektif diambil dari secant ke titik 0,6F<sub>y</sub> pada backbone curve; F<sub>y</sub> dicari iteratif sampai luas di atas &amp; di bawah kurva bilinear seimbang dengan kurva backbone aktual (balanced-area, sama prinsipnya dengan idealisasi ASCE 2017 di Bab G)</div></div>
+            </div>
+
+            <h4>Segitiga energi elastis (E<sub>S</sub>) — sering tertukar dengan K₀</h4>
+            <p>Rumus EVDR/redaman ekivalen (Bab A) membandingkan energi disipasi (luas loop, E<sub>D</sub>) dengan "energi regangan elastis" (E<sub>S</sub>) — dan E<sub>S</sub> ini sering disalahpahami sebagai segitiga di bawah cabang elastis awal K₀ (segitiga O-A). <b>Bukan itu.</b> E<sub>S</sub> adalah segitiga dari titik nol <b>langsung ke titik puncak siklus</b> (B, di δ<sub>u</sub>) — bukan ke titik leleh (A, di δ<sub>y</sub>).</p>
+            <div class="diagram">
+              <svg viewBox="0 0 680 280" role="img" aria-label="Diagram segitiga energi elastis ES dibanding segitiga di titik leleh">
+                <defs>
+                  <marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+                  <marker id="ah2n" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="var(--line-dim)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+                </defs>
+                <line x1="90" y1="220" x2="600" y2="220" stroke="var(--line-dim)" stroke-width="1" marker-end="url(#ah2n)"/>
+                <line x1="340" y1="220" x2="340" y2="50" stroke="var(--line-dim)" stroke-width="1" marker-end="url(#ah2n)"/>
+                <text x="592" y="238" text-anchor="end" font-family="var(--font-mono)" font-size="12" fill="var(--text-dim)">perpindahan, δ</text>
+                <text x="348" y="60" font-family="var(--font-mono)" font-size="12" fill="var(--text-dim)">gaya, F</text>
+                <polygon points="340,220 480,220 480,100" fill="var(--line)" opacity="0.18" stroke="var(--line)" stroke-width="1"/>
+                <polygon points="340,220 400,220 400,140" fill="none" stroke="var(--text-faint)" stroke-width="1" stroke-dasharray="3 3"/>
+                <path d="M340,220 L400,140" fill="none" stroke="var(--text-faint)" stroke-width="1.2" stroke-dasharray="4 3"/>
+                <path d="M400,140 L480,100" fill="none" stroke="var(--gold)" stroke-width="2" marker-end="url(#ah2)"/>
+                <circle cx="400" cy="140" r="4" fill="var(--gold)"/>
+                <circle cx="480" cy="100" r="4" fill="var(--gold)"/>
+                <text x="416" y="128" font-family="var(--font-mono)" font-size="13" fill="var(--text)">A (leleh)</text>
+                <text x="492" y="88" font-family="var(--font-mono)" font-size="13" fill="var(--text)">B (puncak)</text>
+                <text x="400" y="236" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">δ_y</text>
+                <text x="480" y="236" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-faint)">δ_u</text>
+                <text x="426" y="182" text-anchor="middle" font-family="var(--font-mono)" font-size="13" fill="var(--line)">E_S</text>
+              </svg>
+              <div class="diagram-caption">Segitiga biru (E_S) = dari O langsung ke titik puncak B, BUKAN segitiga putus-putus abu-abu di titik leleh A</div>
+            </div>
+            <div class="formula">
+              <div class="eq">E<sub>S</sub> = ½ × δ<sub>u</sub> × F<sub>u</sub></div>
+              <div class="legend-list"><div>Segitiga siku-siku dari O(0,0) ke (δ<sub>u</sub>,0) ke B(δ<sub>u</sub>,F<sub>u</sub>) — garis sekan (secant) langsung dari nol ke puncak, mengabaikan bentuk kurva aslinya yang membelok di A</div></div>
+            </div>
+            <p>Interpretasinya: E<sub>S</sub> adalah energi regangan elastis <b>hipotetis</b> — seolah-olah elemen berperilaku elastis murni (satu kekakuan sekan tunggal) sampai deformasi sebesar δ<sub>u</sub>, tanpa pernah leleh. Rasio E<sub>D</sub>/E<sub>S</sub> menjawab: <i>"dibanding kondisi elastis sempurna sampai deformasi itu, berapa persen energi yang sebenarnya terbuang jadi disipasi plastis (loop) alih-alih tersimpan sebagai energi regangan?"</i> — itulah yang lalu dikonversi ke rasio redaman ekivalen lewat faktor 1/4π (dari penyetaraan ke redaman viskos linear SDOF).</p>
+            <div class="callout"><b>Konsekuensi praktis:</b> E<sub>S</sub> <b>berubah tiap level amplitudo</b> karena δ<sub>u</sub> dan F<sub>u</sub> yang dipakai adalah titik puncak siklus itu spesifik, bukan nilai tetap — konsisten dengan grafik EVDR-vs-displacement yang naik bertahap di data SSBD (Bab E). Jangan pakai satu E<sub>S</sub> dari siklus terakhir untuk menghitung EVDR di semua level amplitudo — itu galat yang sering muncul kalau tidak hati-hati baca definisinya.</div>
+            <div class="source"><b>Sumber:</b> Jacobsen (1930) · Draft SSBD-ERB Pers. 11 · Chopra (2020) — equivalent viscous damping</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Momen-kurvatur (M-φ) — cara baca dan apa yang dibandingkan
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Kurvatur (curvature, φ) adalah besarnya rotasi per satuan panjang yang terjadi pada penampang akibat momen lentur — secara praktis, dihitung dari gradien regangan antar serat terjauh pada penampang fiber (lihat Bab B) dibagi jarak antar serat tersebut. Kurva momen-kurvatur adalah representasi langsung dari perilaku nonlinear penampang di lokasi sendi plastis: tiap titik waktu di NLTHA menghasilkan satu pasang (M, φ), dan kalau semua titik ini diplot, terbentuklah loop histeresis momen-kurvatur.</p>
+            <p>Cara baca loop M-φ untuk perbandingan antar model (contoh langsung dari Haroki, Model A vs B vs C):</p>
+            <ul>
+              <li>Loop yang lebih "gemuk" (luas lebih besar) → penampang di lokasi itu menyerap lebih banyak energi histeretik per siklus — tapi ini <b>bukan otomatis kabar baik</b>, karena juga berarti penampang itu mengalami kerusakan inelastis lebih besar.</li>
+              <li>Model A (35 tiang) → gaya gempa terdistribusi ke banyak tiang → momen per tiang kecil → loop tipis.</li>
+              <li>Model B (18 tiang, tanpa damper) → momen per tiang jauh lebih besar karena tiang lebih sedikit → loop paling gemuk, indikasi tiang paling "bekerja keras".</li>
+              <li>Model C (18 tiang + SPD) → momen per tiang kembali mengecil karena sebagian energi gempa sudah diserap SPD duluan → loop menipis lagi mendekati Model A, meski jumlah tiang sama dengan Model B.</li>
+            </ul>
+            <p>Untuk mengukur kapasitas deformasi inelastis penampang secara kuantitatif, dipakai <b>daktilitas kurvatur</b>:</p>
+            <div class="formula">
+              <div class="eq">μ<sub>φ</sub> = φ<sub>u</sub> / φ<sub>y</sub></div>
+              <div class="legend-list"><div><b>φ<sub>y</sub></b> = kurvatur saat leleh pertama &nbsp; <b>φ<sub>u</sub></b> = kurvatur ultimit (saat regangan batas material tercapai)</div></div>
+            </div>
+            <div class="callout"><b>Jangan tertukar dengan daktilitas perpindahan:</b> μ<sub>φ</sub> (kurvatur, lokal di penampang) dan μ<sub>Δ</sub> = Δ<sub>u</sub>/Δ<sub>y</sub> (perpindahan, global di puncak struktur) adalah dua besaran berbeda — nilai μ<sub>φ</sub> biasanya jauh lebih besar dari μ<sub>Δ</sub> untuk elemen yang sama, karena deformasi inelastis terkonsentrasi hanya di panjang sendi plastis (L<sub>p</sub>), bukan di sepanjang elemen. Kalau papermu melaporkan daktilitas, sebutkan eksplisit yang mana yang kamu maksud.</div>
+            <div class="source"><b>Sumber:</b> Haroki §5.3.4 Gambar 5.12–5.13 · Emilidardi §3.5</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Level performa seismik — dari regangan ke keputusan desain (dengan angka lengkap)
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag skripsi">Skripsi</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Bab A sudah memperkenalkan dua kerangka performance level. Sekarang detail angkanya, karena inilah yang benar-benar dipakai untuk menyimpulkan "strukturmu aman atau tidak" di bab hasil papermu.</p>
+            <p><b>ASCE 61-14</b> (dipakai Haroki, Darmawan, 4101114282PB — kerangka struktur dermaga yang dianalogikan ke SOP/PSSV karena sama-sama sistem tiang+pile head+slab):</p>
+            <table class="datatable">
+              <tr><th>Level performa</th><th>Deskripsi</th><th>Batas regangan beton (ε<sub>c</sub>)</th></tr>
+              <tr><td>Minimal Damage (MD)</td><td>Perilaku nyaris elastis, tanpa/minim deformasi residual</td><td>≤ 0,004</td></tr>
+              <tr><td>Controlled & Repairable Damage (CRD)</td><td>Masih terkendali/dapat diperbaiki, ada perilaku inelastis terbatas</td><td>≤ 0,006</td></tr>
+              <tr><td>Life Safety Protection (LSP)</td><td>Kerusakan tak terhindarkan, tapi struktur masih menahan beban gravitasi</td><td>≤ 0,008</td></tr>
+            </table>
+            <p><b>Cara mengubah batas regangan jadi batas perpindahan yang bisa langsung dibaca dari hasil NLTHA</b> (workflow persis dari Haroki §5.2): dorong satu tiang lewat pushover sampai gagal, pantau regangan beton (tekan) dan regangan PC bar (tarik) di tiap increment perpindahan, catat perpindahan pada saat tiap batas regangan pertama kali tercapai — material mana pun (beton atau PC bar) yang mencapai batasnya lebih dulu yang menentukan. Contoh hasil Haroki:</p>
+            <table class="datatable">
+              <tr><th>Level</th><th>Regangan beton aktual/batas</th><th>Perpindahan lateral batas</th></tr>
+              <tr><td>MD</td><td>0,004 / 0,004</td><td>133 mm</td></tr>
+              <tr><td>CRD</td><td>0,006 / 0,006</td><td>145 mm</td></tr>
+              <tr><td>LSP</td><td>0,008 / 0,008</td><td>188 mm</td></tr>
+            </table>
+            <p>Begitu batas perpindahan ini didapat, tiap perpindahan puncak tiang hasil NLTHA (satu nilai per rekaman gempa, per arah) tinggal diplot ke sumbu ini untuk menentukan levelnya — biasanya disajikan sebagai tabel matriks (gempa × model × arah → label MD/CRD/LSP/{'>'}LSP), persis seperti Tabel 5.4 Haroki.</p>
+            <p><b>ASCE 41-17 / FEMA 356</b> (dipakai Emilidardi, untuk pier PCI-girder): kerangka Operational → Immediate Occupancy → Life Safety → Collapse Prevention, umumnya berbasis batas rotasi/drift komponen (bukan murni regangan beton seperti ASCE 61-14) — lebih berorientasi ke elemen gedung yang diadaptasi ke pier jembatan.</p>
+            <div class="callout"><b>Pilihan untuk papermu:</b> karena strukturmu SOP dengan tiang+pile head (bukan pier girder tunggal), ASCE 61-14 (jalur Haroki/Darmawan) lebih tepat secara analogi struktural dibanding ASCE 41/FEMA 356 (jalur Emilidardi). Tapi tetap sebutkan eksplisit di papermu kerangka mana yang kamu pakai dan kenapa — jangan campur dua kerangka tanpa penjelasan.</div>
+            <div class="source"><b>Sumber:</b> Haroki §5.2 Tabel 5.2, §5.4 Tabel 5.4 · ASCE 61-14 · 4101114282PB Tabel 2</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Respons dinamik: perpindahan, kecepatan, percepatan — masing-masing mewakili apa
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Satu run NLTHA menghasilkan lebih dari sekadar "grafik goyangan" — tiap komponen respons punya peran spesifik dalam analisis, dan ini sering tidak dijelaskan eksplisit di paper manapun (tersirat saja). Berikut pemetaan langsung dari metodologi Haroki §5.3:</p>
+            <table class="datatable">
+              <tr><th>Respons</th><th>Dipakai untuk</th></tr>
+              <tr><td>Perpindahan (displacement, u)</td><td>Menentukan level performa seismik struktur (diplot ke batas perpindahan tiap level, lihat subtopik sebelumnya)</td></tr>
+              <tr><td>Kecepatan (velocity, u̇)</td><td>Menghitung energi redaman viskos struktur (E<sub>d</sub> = ∫c·u̇·du, lihat Bab A)</td></tr>
+              <tr><td>Percepatan (acceleration, ü)</td><td>Menghitung energi kinetik struktur (E<sub>k</sub> = ∫m·ü·du) — dan relevan untuk metrik "peak deck acceleration" di brief proyekmu, indikator kenyamanan/keamanan kendaraan saat gempa kecil-menengah</td></tr>
+              <tr><td>Momen-kurvatur sendi plastis</td><td>Menghitung energi histeretik/sendi plastis struktur (E<sub>a</sub>, lihat Bab A) — dan menentukan level performa via regangan (subtopik sebelumnya)</td></tr>
+            </table>
+            <p><b>Base shear (gaya geser dasar)</b> — total gaya horizontal yang ditahan seluruh elemen substruktur, metrik demand paling ringkas untuk membandingkan "seberapa besar gempa yang harus ditahan strukturmu". Contoh perbandingan dari Darmawan: reaksi dasar Model A (tanpa SPD) 27.127 kN vs Model B (dengan SPD) 24.729 kN — SPD menurunkan K<sub>1</sub> (kekakuan bearing-damper), yang menurunkan C<sub>sm</sub>, yang pada akhirnya menurunkan demand gempa yang harus ditahan substruktur.</p>
+            <p><b>Rasio D/C (demand/capacity)</b> — perbandingan gaya/momen tuntutan hasil analisis terhadap kapasitas penampang hasil desain, dipakai 4101114282PB sebagai pengecekan akhir kecukupan desain:</p>
+            <div class="formula">
+              <div class="eq">D/C = Tuntutan (demand, dari analisis) / Kapasitas (capacity, dari desain penampang)</div>
+              <div class="legend-list"><div>Harus ≤ 1,0 untuk desain memadai; studi 4101114282PB melaporkan rentang 0,7–0,9 — cukup, tidak over-designed</div></div>
+            </div>
+            <div class="source"><b>Sumber:</b> Haroki §5.3 · Darmawan/467504.pdf §5.1 · 4101114282PB §3.1</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Efisiensi & biaya — variabel non-struktural yang tetap jadi argumen utama
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Jangan lupakan sisi ini — seluruh payung riset ini pada akhirnya argumen ekonomi, bukan cuma argumen teknis. Performa seismik yang bagus tidak berarti apa-apa untuk paper ini kalau tidak dikaitkan balik ke penghematan.</p>
+            <ul>
+              <li><b>Jumlah tiang direduksi</b> — metrik headline paling langsung dipakai di semua riset acuan (Haroki: 35→18; Hidayat: 50→35, lalu 35+bracing hemat 15 tiang lagi).</li>
+              <li><b>Biaya konstruksi</b> — Hidayat mengonversi penghematan tiang jadi angka rupiah (~Rp600 juta) — ini yang bikin argumen "cost-effective" konkret, bukan cuma klaim kualitatif.</li>
+              <li><b>Rasio kekakuan (stiffness ratio)</b> — pembanding kekakuan antar konfigurasi struktur, dipakai Hidayat (braced frame 1,58–1,78× lebih kaku dari SOP tanpa bracing) dan relevan juga untuk membandingkan konfigurasi SSBD di Bab E.</li>
+            </ul>
+            <div class="callout"><b>Untuk papermu:</b> struktur argumen konferensimu idealnya simetris dengan pola ini — "R=3,5 mengurangi tiang dari X ke Y (hemat Z%), SSBD-ERB mempertahankan performa setara R=1,5 (dibuktikan lewat level performa & momen-kurvatur di subtopik sebelumnya), maka total penghematan biaya sekitar Rp [hitung]". Reviewer ISLIE akan mencari struktur argumen seperti ini secara eksplisit.</div>
+            <div class="source"><b>Sumber:</b> Hidayat dkk. (2024) §Results & Discussion · Haroki §5.1</div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ================= I ================= -->
+      <section class="topic" id="I">
+        <div class="topic-header">
+          <div class="topic-letter">I</div>
+          <div class="topic-title">
+            <h2>Software & Scripting</h2>
+            <p class="desc">STKO untuk kerja visual cepat, OpenSeesPy untuk kerja yang harus diotomasi/diulang ratusan kali.</p>
+          </div>
+        </div>
+        <div class="topic-meta">
+          <span><b>Sumber utama:</b> STKO Manual §1–2; alur kerja umum OpenSeesPy; Fajar & Aminullah (2019)</span>
+          <span><b>Konferensi & Skripsi:</b> STKO cukup · <b>Tesis:</b> wajib migrasi ke OpenSeesPy</span>
+        </div>
+
+        <details class="subtopic" open>
+          <summary class="subtopic-head">
+            Kapan pakai STKO, kapan wajib pakai OpenSeesPy
+            <span class="subtopic-tags"><span class="tag conf">Konf</span><span class="tag skripsi">Skripsi</span><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>STKO cocok untuk studi kasus tunggal atau sedikit varian model (2–5 model) yang dikerjakan manual lewat GUI — cepat untuk divisualisasikan dan didebug secara visual. Tapi STKO <b>tidak dirancang untuk diparametrisasi otomatis</b> lewat script eksternal.</p>
+            <p>Untuk Proyek 3 (tesis GA/ANN), kamu butuh menjalankan model dengan puluhan-ratusan kombinasi parameter secara otomatis — ini hanya mungkin dengan <b>OpenSeesPy</b>, binding Python resmi untuk OpenSees. Command-nya nyaris sama persis dengan Tcl, cuma sintaksnya jadi fungsi Python:</p>
+            <div class="codemap">
+<span class="cm-label">Perbandingan konsep Tcl vs OpenSeesPy</span>Tcl:        uniaxialMaterial Steel01 1 fy E0 b
+OpenSeesPy: ops.uniaxialMaterial('Steel01', 1, fy, E0, b)
+
+Tcl:        element forceBeamColumn 1 1 2 $transf $sec
+OpenSeesPy: ops.element('forceBeamColumn', 1, 1, 2, transf, sec)</div>
+            <p>Strategi disarankan: bangun & validasi model dulu di STKO (Proyek 1 & 2) untuk memastikan perilaku struktur masuk akal secara visual, lalu <b>terjemahkan model yang sudah tervalidasi itu ke fungsi OpenSeesPy terparametrisasi</b> untuk Proyek 3 — bukan membangun dari nol di Python.</p>
+            <div class="source"><b>Sumber:</b> STKO Manual §1 · OpenSeesPy Documentation</div>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Ekosistem Python untuk post-processing
+            <span class="subtopic-tags"><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <ul>
+              <li><b>numpy / pandas</b> — baca & olah output time-history (displacement, force per step waktu) dari recorder OpenSees.</li>
+              <li><b>matplotlib</b> — plot kurva histeresis, momen-kurvatur, dan respons spektra hasil analisis — dipakai untuk figur laporan/paper juga.</li>
+            </ul>
+            <p>Ini bagian yang belum mendesak sekarang (kamu masih di tahap model dasar), tapi mulai biasakan menyimpan output recorder dalam format yang gampang dibaca pandas (CSV/txt terstruktur) sejak model pertamamu — akan sangat menghemat waktu ketika masuk ke tahap otomasi Proyek 3 nanti.</p>
+          </div>
+        </details>
+
+        <details class="subtopic">
+          <summary class="subtopic-head">
+            Preseden ANN dari Pak Angga sendiri — arsitektur siap adaptasi untuk Tesis
+            <span class="subtopic-tags"><span class="tag tesis">Tesis</span></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <p>Referensi baru ini penting banget untuk Proyek 3 — ini bukan cuma "contoh ANN di bidang teknik sipil", tapi preseden dari pembimbingmu sendiri, di domain yang nyaris identik (pier jembatan + shear panel damper) dengan tujuan yang nyaris sama (optimasi parameter damper). Kamu tidak perlu merancang arsitektur ANN dari nol.</p>
+            <p><b>Masalah yang mereka pecahkan:</b> mencari ketebalan SPD optimum (yang memaksimumkan disipasi energi) untuk pier jembatan dengan multiple steel pipe column, biasanya butuh analisis cyclic nonlinier berulang untuk setiap kombinasi konfigurasi struktur — sangat mahal secara komputasi (405 konfigurasi struktur × 35+ variasi ketebalan SPD per konfigurasi).</p>
+            <p><b>Arsitektur ANN yang dipakai:</b> feed-forward backpropagation, 2 hidden layer, 80 neuron per layer (jumlah neuron ditentukan lewat trial beberapa konfigurasi sampai koefisien determinasi R mendekati 1).</p>
+            <table class="datatable">
+              <tr><th>Elemen</th><th>Detail pada studi Pak Angga</th></tr>
+              <tr><td>Input (5 parameter)</td><td>Jumlah SPD (N<sub>SPD</sub>), jarak as-ke-as pipa baja (B<sub>c</sub>), diameter pipa (D<sub>c</sub>), tebal pipa (t<sub>c</sub>), kedalaman SPD (d<sub>w</sub>)</td></tr>
+              <tr><td>Output</td><td>Ketebalan SPD optimum (t<sub>0</sub>) pada disipasi energi maksimum</td></tr>
+              <tr><td>Data training</td><td>405 konfigurasi struktur, dianalisis cyclic nonlinier untuk membangun kurva energi-vs-ketebalan tiap konfigurasi</td></tr>
+              <tr><td>Hasil</td><td>R = 0,988 &nbsp;·&nbsp; rata-rata error ≈ 2,38% &nbsp;·&nbsp; error maksimum ≈ 3 mm ketebalan</td></tr>
+              <tr><td>Validasi akhir</td><td>Hasil estimasi ANN diverifikasi ulang lewat NLTHA penuh (integrasi Newmark, β=0,25 γ=0,5, ξ=2%, 6 rekaman gempa sesuai kode JRA) pada 5 contoh konfigurasi pier</td></tr>
+            </table>
+            <div class="callout"><b>Cara adaptasi ke tesismu:</b> struktur masalahnya identik dengan yang kamu hadapi — "banyak analisis nonlinier mahal → latih ANN sebagai surrogate → validasi ulang dengan analisis penuh". Input/output-mu akan beda (konfigurasi tiang + dimensi damper, bukan geometri pipa baja + ketebalan SPD), dan kalau tesismu perlu multi-objective (biaya <i>dan</i> performa sekaligus, bukan cuma energi disipasi tunggal seperti paper ini), arsitektur output-nya perlu diperluas — tapi <b>titik awal arsitektur (2 hidden layer, mulai dari puluhan neuron, feed-forward backprop) sudah tervalidasi di domain yang sama</b>, jadi tidak perlu coba-coba dari nol.</div>
+            <p>Satu perbedaan praktis: studi ini kemungkinan besar dikerjakan di MATLAB (umum untuk era & lingkungan risetnya). Untuk tesismu, ekosistem Python (scikit-learn/TensorFlow/PyTorch, lihat subtopik sebelumnya) yang perlu dipakai — tapi konsep arsitekturnya portable ke framework manapun.</p>
+            <div class="source"><b>Sumber:</b> Fajar, A.S. & Aminullah, A. (2019). MATEC Web of Conferences 258, 02011</div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ================= J ================= -->
+      <section class="topic" id="J">
+        <div class="topic-header">
+          <div class="topic-letter">J</div>
+          <div class="topic-title">
+            <h2>Standar & Referensi Acuan</h2>
+            <p class="desc">Daftar lengkap: yang sudah ada di project knowledge-mu, dan tambahan yang perlu kamu cari sendiri.</p>
+          </div>
+        </div>
+
+        <details class="subtopic" open>
+          <summary class="subtopic-head">
+            Daftar referensi lengkap
+            <span class="subtopic-tags"></span>
+            <span class="read-check"><input type="checkbox" onclick="event.stopPropagation()"></span>
+          </summary>
+          <div class="subtopic-body">
+            <div class="reflist">
+              <div class="refitem">
+                <div class="reftype">Sudah ada<br>di project</div>
+                <div class="refbody"><b>SNI 2833:2016</b> — Standar Perencanaan Ketahanan Gempa untuk Jembatan<span>Acuan utama beban gempa, respons spektra, faktor R, metode analisis dinamik (Bab A, F)</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Sudah ada<br>di project</div>
+                <div class="refbody"><b>SNI 1725:2016</b> — Pembebanan untuk Jembatan<span>Acuan kombinasi beban gravitasi, lalu lintas, servis (Bab E — perhitungan gap)</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Sudah ada<br>di project</div>
+                <div class="refbody"><b>Haroki, Y. (2022)</b> — Tesis, Perbandingan Performa Seismik SHSPG dengan Variasi R + SPD<span>Kerangka riset paling dekat ke Proyek 1 (Konferensi) — pelajari Bab III & IV secara menyeluruh</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Sudah ada<br>di project</div>
+                <div class="refbody"><b>Darmawan, M.F. (2021)</b> — Tesis, PSSV Braced with SPD<span>Paling detail soal validasi elemen tiang & kalibrasi p-y/t-z/q-z (Bab D)</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Sudah ada<br>di project</div>
+                <div class="refbody"><b>Emilidardi, A.M. (2022)</b> — Tesis, Bridge Pier Equipped with SPD<span>Acuan performance level ASCE 41/FEMA 356 & plastic hinge length (Bab A, B)</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Sudah ada<br>di project</div>
+                <div class="refbody"><b>Hidayat, M.F. dkk. (2024)</b> — Jurnal CED, Performance Optimization of SOP with Braced Frame<span>Acuan cyclic loading ACI 374.1 & analisis biaya (Bab G)</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Sudah ada<br>di project</div>
+                <div class="refbody"><b>STKO User Manual</b> — ASDEA Software<span>Rujukan teknis alur kerja preprocessor/postprocessor (Bab C, H)</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Sudah ada<br>di project</div>
+                <div class="refbody"><b>Putri, A.P., Setiawan, A.F., Satyarno, I., Jamasri, Fakhrurrozi, M.S.</b> — Draft, Hysteretic Performance of Various Longitudinal Profile of SSBD: Experimental and Numerical Study<span class="badge-new">baru</span><span>Backbone curve SSBD siap pakai — sumber utama Bab E sekarang. Draft belum publish, cek update terbaru ke Pak Angga sebelum kutip nomor halaman/persamaan final</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Sudah ada<br>di project</div>
+                <div class="refbody"><b>Setiawan, A.F. (2018)</b> — Disertasi PhD, Kyoto University, Development of High Seismic Performance Integrated Bridge Pier Connected by Hysterical Damper<span class="badge-new">baru</span><span>Asal-usul konsep damper+gap (SPDG/FDG) — konteks sejarah untuk tinjauan pustaka papermu (Bab E)</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Sudah ada<br>di project</div>
+                <div class="refbody"><b>Setiawan, A.F. & Takahashi, Y. (2018)</b> — JSCE Journal Ser. A1, 74(4), I_131–I_147, Friction Damper Plus Gap<span class="badge-new">baru</span><span>Detail eksperimen+FE 3D dari konsep FDG, pelengkap disertasi (Bab E)</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Sudah ada<br>di project</div>
+                <div class="refbody"><b>Fajar, A.S. & Aminullah, A. (2019)</b> — MATEC Web of Conferences 258, 02011, ANN untuk Optimasi SPD<span class="badge-new">baru</span><span>Preseden arsitektur ANN langsung dari pembimbingmu — dasar metodologi Proyek 3 (Bab I)</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Sudah ada<br>di project</div>
+                <div class="refbody"><b>Setiawan, A.F., Santoso, A.K., Darmawan, M.F., Adi, A.D., Ismanti, S. (2023)</b> — Civil Engineering Journal, 9(7), pp. 1561–1578<span class="badge-new">baru</span><span>Preseden metodologi langsung untuk Skripsi — perbandingan perlakuan zona atas tiang (Bab D)</span></div>
+              </div>
+
+              <div class="refitem">
+                <div class="reftype">Tambahan<br>disarankan</div>
+                <div class="refbody"><b>Chopra, A.K. (2020)</b> — Dynamics of Structures: Theory and Applications to Earthquake Engineering, 5th ed.<span class="badge-new">baru</span><span>Textbook fundamental dinamika struktur — dikutip Darmawan tapi tidak dibahas detail di tesisnya; kalau konsep SDOF/MDOF di Bab A masih terasa asing, baca bab-bab awal buku ini langsung.</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Tambahan<br>disarankan</div>
+                <div class="refbody"><b>Mander, J.B., Priestley, M.J.N., Park, R. (1988)</b> — Theoretical Stress-Strain Model for Confined Concrete<span class="badge-new">baru</span><span>Model confined concrete yang lebih umum dipakai untuk kolom solid (pelengkap Kent-Park, kalau strukturmu nanti punya elemen selain spun pile berongga)</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Tambahan<br>disarankan</div>
+                <div class="refbody"><b>Priestley, M.J.N., Seible, F., Calvi, G.M. (1996)</b> — Seismic Design and Retrofit of Bridges<span class="badge-new">baru</span><span>Textbook standar untuk desain jembatan tahan gempa secara umum — baik untuk konteks lebih luas di luar SOP spesifik</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Tambahan<br>disarankan</div>
+                <div class="refbody"><b>OpenSees Command Language Manual</b> (Mazzoni, McKenna, Scott, Fenves)<span class="badge-new">baru</span><span>Referensi definitif untuk tiap command/material OpenSees — buka setiap kali ragu parameter apa yang diminta suatu material/elemen</span></div>
+              </div>
+              <div class="refitem">
+                <div class="reftype">Sudah teratasi</div>
+                <div class="refbody"><b>Backbone force-displacement SSBD</b> — status update<span>Sebelumnya ditandai "wajib dicari ke pembimbing" — kini sudah tersedia lengkap lewat Draft SSBD-ERB (Tabel 3–5, Bab E). Yang masih perlu diklarifikasi langsung: <b>apakah skema gap tetap dipakai untuk implementasi bridge-scale-mu</b>, karena draft ini mendeskripsikan SSBD-RB tanpa gap eksplisit (lihat callout di Bab E, subtopik SSBD-RB).</span></div>
+              </div>
+            </div>
+          </div>
+        </details>
+      </section>
+
+    </div>
+
+    <footer>
+      Disusun dari Bab Landasan Teori / Theoretical Background 4 dokumen riset acuan di project knowledge, + referensi tambahan bertanda "baru". Gunakan kolom pencarian di sidebar untuk lompat cepat ke istilah/rumus tertentu.
+    </footer>
+  </main>
+</div>
+
+<script>
+  // Search filter across subtopics
+  const searchInput = document.getElementById('searchInput');
+  const allDetails = Array.from(document.querySelectorAll('details.subtopic'));
+  const allTopics = Array.from(document.querySelectorAll('section.topic'));
+
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    allDetails.forEach(d => {
+      const text = d.textContent.toLowerCase();
+      const match = q === '' || text.includes(q);
+      d.style.display = match ? '' : 'none';
+      if(q !== '' && match){ d.open = true; }
+    });
+    allTopics.forEach(sec => {
+      const visible = Array.from(sec.querySelectorAll('details.subtopic')).some(d => d.style.display !== 'none');
+      sec.style.display = (q === '' || visible) ? '' : 'none';
+    });
+  });
+
+  // Open all / close all
+  document.getElementById('openAll').addEventListener('click', () => allDetails.forEach(d => d.open = true));
+  document.getElementById('closeAll').addEventListener('click', () => allDetails.forEach(d => d.open = false));
+
+  // Reading progress (session only, no persistence)
+  const checkboxes = Array.from(document.querySelectorAll('.read-check input'));
+  document.getElementById('totalCount').textContent = checkboxes.length;
+  function updateProgress(){
+    const done = checkboxes.filter(c => c.checked).length;
+    document.getElementById('readCount').textContent = done;
+  }
+  checkboxes.forEach(c => c.addEventListener('change', updateProgress));
+  updateProgress();
+
+  // Active nav highlight on scroll
+  const navLinks = Array.from(document.querySelectorAll('nav.toc a'));
+  const sections = allTopics;
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const id = entry.target.getAttribute('id');
+      const link = navLinks.find(l => l.getAttribute('href') === '#' + id);
+      if(!link) return;
+      if(entry.isIntersecting){
+        navLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-15% 0px -75% 0px', threshold: 0 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

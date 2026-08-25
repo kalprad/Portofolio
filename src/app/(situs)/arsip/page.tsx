@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     "Slide, catatan, bank soal, dan modul praktikum Teknik Sipil UGM jenjang S1 dan S2.",
 };
 
-const URUTAN_JENJANG: StudyLevel[] = ["s1", "s2", "umum"];
+const URUTAN_JENJANG: StudyLevel[] = ["s1", "s2", "umum", "penelitian"];
 
 export default async function DaftarArsip() {
   const [session, koleksi, jumlah] = await Promise.all([

@@ -198,6 +198,7 @@ const archiveCollections: ResourceDef = {
         { value: "s1", label: "S1" },
         { value: "s2", label: "S2" },
         { value: "umum", label: "Umum" },
+        { value: "penelitian", label: "Penelitian" },
       ],
     },
     { name: "semester", label: "Semester", type: "number", group: "Detail" },
