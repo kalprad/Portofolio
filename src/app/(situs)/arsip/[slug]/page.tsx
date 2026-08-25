@@ -109,60 +109,80 @@ export default async function DetailArsip({
             <ul className="mt-5 flex flex-col">
               {berkas.map((b) => {
                 const isFolder = Boolean(b.drive_folder_id) && !b.drive_file_id;
+                const bisaLihatButir = b.access_level === "public" || bolehUnduh;
+                const isEmbed =
+                  bisaLihatButir &&
+                  b.mime_type === "text/html" &&
+                  Boolean(b.external_url) &&
+                  b.external_url!.startsWith("/");
 
                 return (
-                  <li
-                    key={b.id}
-                    className="flex flex-col gap-4 border-t border-border py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge>{ARCHIVE_KIND_LABEL[b.kind]}</Badge>
-                        {b.file_size_bytes ? (
-                          <span className="text-xs text-subtle tabular-nums">
-                            {formatBytes(b.file_size_bytes)}
-                          </span>
+                  <li key={b.id} className="border-t border-border py-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge>{ARCHIVE_KIND_LABEL[b.kind]}</Badge>
+                          {b.file_size_bytes ? (
+                            <span className="text-xs text-subtle tabular-nums">
+                              {formatBytes(b.file_size_bytes)}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <p className="mt-2 font-display text-lg leading-snug">{b.title_id}</p>
+
+                        {b.description_id ? (
+                          <p className="mt-1 text-sm text-muted-foreground">{b.description_id}</p>
                         ) : null}
                       </div>
 
-                      <p className="mt-2 font-display text-lg leading-snug">{b.title_id}</p>
-
-                      {b.description_id ? (
-                        <p className="mt-1 text-sm text-muted-foreground">{b.description_id}</p>
-                      ) : null}
+                      <div className="shrink-0">
+                        {bolehUnduh ? (
+                          <a
+                            href={`/api/arsip/${b.id}/unduh`}
+                            className={buttonClass("outline", "sm")}
+                            // Butir yang sudah tertanam di halaman ini dibuka di
+                            // tab baru, supaya pengunjung tidak kehilangan
+                            // tampilan embed-nya. Untuk unduhan biasa biarkan
+                            // peramban menangani responsnya tanpa mengganti halaman.
+                            {...(isEmbed ? { target: "_blank", rel: "noopener nofollow" } : { rel: "nofollow" })}
+                          >
+                            {isFolder ? (
+                              <>
+                                <FolderOpen className="size-4" aria-hidden />
+                                Buka folder
+                              </>
+                            ) : isEmbed ? (
+                              <>
+                                <Download className="size-4" aria-hidden />
+                                Buka tab baru
+                              </>
+                            ) : (
+                              <>
+                                <Download className="size-4" aria-hidden />
+                                Unduh
+                              </>
+                            )}
+                          </a>
+                        ) : (
+                          <span
+                            className="inline-flex min-h-[38px] items-center gap-2 rounded border border-border px-3 text-sm text-subtle"
+                            title="Masuk dengan akun UGM untuk mengunduh"
+                          >
+                            <Lock className="size-4" aria-hidden />
+                            Terkunci
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="shrink-0">
-                      {bolehUnduh ? (
-                        <a
-                          href={`/api/arsip/${b.id}/unduh`}
-                          className={buttonClass("outline", "sm")}
-                          // Bukan navigasi biasa: biarkan peramban menangani
-                          // respons unduhan tanpa mengganti halaman.
-                          rel="nofollow"
-                        >
-                          {isFolder ? (
-                            <>
-                              <FolderOpen className="size-4" aria-hidden />
-                              Buka folder
-                            </>
-                          ) : (
-                            <>
-                              <Download className="size-4" aria-hidden />
-                              Unduh
-                            </>
-                          )}
-                        </a>
-                      ) : (
-                        <span
-                          className="inline-flex min-h-[38px] items-center gap-2 rounded border border-border px-3 text-sm text-subtle"
-                          title="Masuk dengan akun UGM untuk mengunduh"
-                        >
-                          <Lock className="size-4" aria-hidden />
-                          Terkunci
-                        </span>
-                      )}
-                    </div>
+                    {isEmbed ? (
+                      <iframe
+                        src={b.external_url!}
+                        title={b.title_id}
+                        className="mt-5 h-[80vh] w-full rounded border border-border"
+                      />
+                    ) : null}
                   </li>
                 );
               })}
