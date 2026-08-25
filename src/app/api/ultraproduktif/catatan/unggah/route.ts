@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 
 /**
- * Relai unggah lampiran Catatan — peramban PUT isi berkasnya ke SINI (sesama
- * domain), lalu di sini kita teruskan ke sesi resumable upload Drive.
+ * Relai unggah lampiran Catatan — peramban PUT tiap POTONGAN berkas ke SINI
+ * (sesama domain), lalu di sini kita teruskan ke sesi resumable upload Drive.
  *
  * Kenapa tidak PUT langsung dari peramban ke Drive: sempat dicoba begitu,
  * tapi Google Drive tidak mengizinkan CORS untuk PUT resumable upload dari
@@ -12,9 +12,15 @@ import { requireAdmin } from "@/lib/auth";
  * Server-ke-server tidak kena aturan CORS (itu aturan khusus peramban), jadi
  * relai satu langkah ini menyelesaikannya.
  *
- * Jalan di Edge runtime dan meneruskan body sebagai STREAM (bukan dibaca
- * penuh ke memori dulu) — itu caranya lolos dari batas ukuran request fungsi
- * serverless Vercel (~4,5 MB) yang membatasi upload lain di situs ini.
+ * Kenapa DIPOTONG-POTONG (bukan satu PUT berisi seluruh berkas): batas ukuran
+ * request Vercel Functions (~4,5 MB) TERNYATA tetap berlaku walau Edge
+ * runtime dan body-nya diteruskan sebagai stream — sempat dikira lolos, tapi
+ * di produksi tetap kena 413 buat berkas besar. Jalan keluarnya justru
+ * protokol resumable upload Drive yang sebenarnya: klien memotong berkas jadi
+ * beberapa bagian kecil (lihat `catatan-panel.tsx`), tiap bagian dikirim
+ * sebagai request TERPISAH ke sini — masing-masing jauh di bawah batas — dan
+ * Drive menyambung-nyambungkannya sendiri di sisi mereka berdasar sesi + posisi
+ * byte (`Content-Range`) tiap potongan.
  *
  * Route API tidak dijaga middleware (lihat `middleware.ts`), jadi otorisasi
  * dicek manual di sini — pola yang sama dipakai `/api/arsip/[itemId]/unduh`.
@@ -38,40 +44,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "URL sesi unggah tidak sah." }, { status: 400 });
   }
 
-  if (!request.body) {
-    return NextResponse.json({ error: "Tidak ada isi berkas." }, { status: 400 });
+  // "Content-Length"/"Content-Range" untuk POTONGAN INI — klien yang
+  // menghitung & mengirim posisi byte-nya (lihat `catatan-panel.tsx`) karena
+  // dialah yang memotong berkasnya, tahu persis batas tiap bagian.
+  const total = Number(request.headers.get("x-berkas-ukuran"));
+  const mulai = Number(request.headers.get("x-potongan-mulai"));
+  const akhir = Number(request.headers.get("x-potongan-akhir"));
+  if (![total, mulai, akhir].every(Number.isFinite) || total <= 0 || mulai < 0 || akhir < mulai) {
+    return NextResponse.json({ error: "Header posisi potongan tidak sah." }, { status: 400 });
   }
 
-  // "Content-Length" tidak bisa disetel manual lewat fetch() (nama header
-  // terlarang di spesifikasinya — undici melempar galat, beda dari peramban
-  // yang diam-diam membuangnya) padahal kita PUT satu-satunya & terakhir
-  // "potongan" berkasnya sekaligus (bukan resumable bertahap sungguhan).
-  // "Content-Range" adalah cara resmi Drive buat bilang "ini potongan
-  // terakhir, totalnya segini" tanpa header itu.
-  //
-  // Ukurannya diambil dari header kiriman klien (`X-Berkas-Ukuran`, isinya
-  // `berkas.size` yang klien SUDAH TAHU sebelum kirim), bukan dari
-  // "content-length" request masuk — di produksi (HTTP/2 lewat jaringan edge
-  // Vercel) header itu kerap tidak ada sama sekali walau isinya tetap
-  // determinate, beda dari server dev lokal yang selalu menyertakannya.
-  // Tanpa Content-Range yang benar, Drive tidak tahu ini potongan terakhir
-  // dan menolak unggahannya.
-  const headers: Record<string, string> = {
-    "Content-Type": request.headers.get("content-type") ?? "application/octet-stream",
-  };
-  const total = Number(request.headers.get("x-berkas-ukuran"));
-  if (Number.isFinite(total) && total > 0) {
-    headers["Content-Range"] = `bytes 0-${total - 1}/${total}`;
-  }
+  const isi = await request.arrayBuffer();
 
   try {
     const hulu = await fetch(sesiUrl, {
       method: "PUT",
-      headers,
-      body: request.body,
-      duplex: "half",
-    } as RequestInit);
+      headers: {
+        "Content-Type": request.headers.get("content-type") ?? "application/octet-stream",
+        "Content-Range": `bytes ${mulai}-${akhir}/${total}`,
+      },
+      body: isi,
+    });
 
+    // 308 = potongan diterima, Drive minta lanjut potongan berikutnya — BUKAN
+    // galat, teruskan apa adanya supaya klien tahu harus lanjut.
     const teks = await hulu.text();
     return new NextResponse(teks, {
       status: hulu.status,

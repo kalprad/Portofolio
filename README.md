@@ -460,12 +460,16 @@ Setup foldernya sendiri:
 2. Salin ID-nya dari URL folder —
    `drive.google.com/drive/folders/<ID-NYA>` — isi `GOOGLE_DRIVE_CATATAN_FOLDER_ID`.
 
-**Tidak ada batas ukuran dari sisi situs.** Isi berkasnya diteruskan sebagai
-STREAM lewat satu route relai (`/api/ultraproduktif/catatan/unggah`, Edge
-runtime) — tidak pernah ditampung penuh ke memori — jadi tidak kebentur batas
-ukuran request fungsi serverless Vercel (sekitar 4,5 MB) yang membatasi
-fitur upload lain di situs ini (mis. unggah foto profil). Batasnya jadi
-murni kuota Drive & kecepatan koneksi peramban.
+**Tidak ada batas ukuran dari sisi situs** — tapi bukan lewat streaming
+(sempat dicoba, ternyata batas ~4,5 MB Vercel Functions tetap berlaku
+meski Edge runtime & body diteruskan sebagai stream). Solusinya justru
+protokol resumable upload Drive yang sebenarnya: peramban memotong berkas
+jadi bagian-bagian kecil (4 MB per bagian) dan mengirimnya satu-satu ke
+route relai (`/api/ultraproduktif/catatan/unggah`, Edge runtime), yang
+meneruskan tiap bagian ke Drive lengkap dengan posisi byte-nya
+(`Content-Range`) — Drive yang menyambung-nyambungkannya di sisi mereka.
+Tiap request jauh di bawah batas Vercel walau totalnya bisa berapa saja;
+batasnya jadi murni kuota Drive & kecepatan koneksi peramban.
 
 Kolom "Atau tempel tautan Drive" di form yang sama tetap ada buat kasus lain:
 berkas yang SUDAH ADA di Drive dan tidak perlu diunggah ulang.

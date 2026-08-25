@@ -12,6 +12,13 @@ import { formatBytes } from "@/lib/utils";
 import type { WorkNote } from "@/lib/workspace-types";
 import { cn } from "@/lib/utils";
 
+interface MetaBerkasDrive {
+  id: string;
+  name: string;
+  mimeType: string;
+  size?: string;
+}
+
 function TombolSimpan() {
   const { pending } = useFormStatus();
   return (
@@ -176,36 +183,67 @@ function CatatanBaruForm({ proyekId, onSelesai }: { proyekId: string; onSelesai:
           return;
         }
 
-        setStatus(`Mengunggah ${berkas.name}…`);
-        // Bukan PUT langsung ke Drive dari sini — Drive tidak mengizinkan CORS
-        // buat unggahan resumable dari peramban. Lewat relai sesama domain
-        // sendiri dulu (lihat route.ts-nya) yang meneruskan ke Drive.
-        let hasilUnggah: Response;
-        try {
-          hasilUnggah = await fetch("/api/ultraproduktif/catatan/unggah", {
-            method: "POST",
-            headers: {
-              "X-Sesi-Url": sesi.url,
-              "X-Berkas-Ukuran": String(berkas.size),
-              "Content-Type": berkas.type || "application/octet-stream",
-            },
-            body: berkas,
-          });
-        } catch {
-          setStatus(null);
-          setPesan("Gagal mengunggah berkas — periksa koneksi lalu coba lagi.");
-          return;
+        // Dikirim per-POTONGAN (bukan sekaligus) — batas ukuran request
+        // Vercel (~4,5 MB) tetap berlaku walau lewat Edge runtime & stream,
+        // jadi berkas besar HARUS dipecah dulu di sini. Ukurannya kelipatan
+        // 256 KB sesuai syarat resumable upload Drive.
+        const UKURAN_POTONGAN = 4 * 1024 * 1024;
+        let offset = 0;
+        let meta: MetaBerkasDrive | null = null;
+
+        while (offset < berkas.size) {
+          const akhir = Math.min(offset + UKURAN_POTONGAN, berkas.size);
+          const persen = Math.round((offset / berkas.size) * 100);
+          setStatus(`Mengunggah ${berkas.name}… (${persen}%)`);
+
+          // Bukan PUT langsung ke Drive dari sini — Drive tidak mengizinkan
+          // CORS buat unggahan resumable dari peramban. Lewat relai sesama
+          // domain sendiri dulu (lihat route.ts-nya) yang meneruskan ke Drive.
+          let hasilUnggah: Response;
+          try {
+            hasilUnggah = await fetch("/api/ultraproduktif/catatan/unggah", {
+              method: "POST",
+              headers: {
+                "X-Sesi-Url": sesi.url,
+                "X-Berkas-Ukuran": String(berkas.size),
+                "X-Potongan-Mulai": String(offset),
+                "X-Potongan-Akhir": String(akhir - 1),
+                "Content-Type": berkas.type || "application/octet-stream",
+              },
+              body: berkas.slice(offset, akhir),
+            });
+          } catch {
+            setStatus(null);
+            setPesan("Gagal mengunggah berkas — periksa koneksi lalu coba lagi.");
+            return;
+          }
+
+          if (hasilUnggah.status === 308) {
+            // Potongan diterima, Drive minta lanjut — bukan galat.
+            offset = akhir;
+            continue;
+          }
+          if (!hasilUnggah.ok) {
+            setStatus(null);
+            // Tampilkan alasan asli dari Drive (bukan cuma "coba lagi") supaya
+            // galat berikutnya, kalau ada, langsung ketahuan penyebabnya.
+            const detail = await hasilUnggah.text().catch(() => "");
+            setPesan(`Google Drive menolak unggahan (${hasilUnggah.status}).${detail ? ` ${detail.slice(0, 200)}` : ""}`);
+            return;
+          }
+
+          // Status ok di luar 308 berarti ini potongan TERAKHIR — Drive
+          // membalas metadata berkas yang sudah lengkap.
+          meta = (await hasilUnggah.json()) as MetaBerkasDrive;
+          offset = akhir;
         }
-        if (!hasilUnggah.ok) {
+
+        if (!meta) {
           setStatus(null);
-          // Tampilkan alasan asli dari Drive (bukan cuma "coba lagi") supaya
-          // galat berikutnya, kalau ada, langsung ketahuan penyebabnya.
-          const detail = await hasilUnggah.text().catch(() => "");
-          setPesan(`Google Drive menolak unggahan (${hasilUnggah.status}).${detail ? ` ${detail.slice(0, 200)}` : ""}`);
+          setPesan("Unggahan tidak selesai. Coba lagi.");
           return;
         }
 
-        const meta = (await hasilUnggah.json()) as { id: string; name: string; mimeType: string; size?: string };
         fd.set("berkas_drive_id", meta.id);
         fd.set("berkas_nama", meta.name);
         fd.set("berkas_mime", meta.mimeType);
