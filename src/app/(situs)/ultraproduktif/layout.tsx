@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Container } from "@/components/ui/primitives";
 import { KerjaSidebar } from "@/components/kerja/kerja-sidebar";
 import { KerjaBottomNav } from "@/components/kerja/kerja-bottom-nav";
 import { QuickAddSheet } from "@/components/kerja/quick-add-sheet";
@@ -34,14 +35,16 @@ export default async function KerjaLayout({ children }: { children: React.ReactN
   const proyek = workspaceSheetsConfigured() ? await listProjects() : [];
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[180px_1fr] lg:gap-10">
-      <aside className="lg:sticky lg:top-8 lg:self-start">
-        <KerjaSidebar proyek={proyek} />
-      </aside>
-      <div className="min-w-0 pb-[calc(76px+env(safe-area-inset-bottom))] lg:pb-0">{children}</div>
+    <Container size="wide">
+      <div className="grid gap-8 py-8 lg:grid-cols-[180px_1fr] lg:gap-10">
+        <aside className="lg:sticky lg:top-8 lg:self-start">
+          <KerjaSidebar proyek={proyek} />
+        </aside>
+        <div className="min-w-0 pb-[calc(76px+env(safe-area-inset-bottom))] lg:pb-0">{children}</div>
 
-      <KerjaBottomNav proyek={proyek} />
-      <QuickAddSheet proyek={proyek} />
-    </div>
+        <KerjaBottomNav proyek={proyek} />
+        <QuickAddSheet proyek={proyek} />
+      </div>
+    </Container>
   );
 }

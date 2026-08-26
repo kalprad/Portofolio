@@ -325,7 +325,7 @@ export function CatatanPanel({ proyekId, catatan }: { proyekId: string; catatan:
           Belum ada catatan. Simpan referensi, tautan berkas, atau progres di sini.
         </p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {catatan.map((c) => (
             <CatatanItem key={c.id} catatan={c} proyekId={proyekId} />
           ))}
