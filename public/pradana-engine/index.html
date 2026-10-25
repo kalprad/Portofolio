@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pradana Engine</title>
-<meta name="description" content="Solver elemen hingga 6-DOF (flat shell, plate Suhendro, CST, BDR) yang berjalan di browser.">
+<meta name="description" content="Solver elemen hingga 6-DOF (frame, truss, grid, flat shell, plate Suhendro, CST, BDR) yang berjalan di browser.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=B612+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -81,6 +81,11 @@
   .opts .help { display: block; font-size: 12px; color: var(--pencil); margin-top: 3px; }
   .check { display: flex; gap: 8px; align-items: center; font-size: 13px; cursor: pointer; }
   .check input { accent-color: var(--ink); width: 15px; height: 15px; margin: 0; }
+  .parts { margin-top: 12px; }
+  .parts label { display: block; font-size: 13px; margin-bottom: 3px; }
+  .parts .help { display: block; font-size: 12px; color: var(--pencil); margin-top: 3px; }
+  select { width: 100%; padding: 6px 8px; border: 1px solid var(--rule-strong); border-radius: 3px;
+           background: var(--sheet); color: var(--graphite); font: 13px var(--ui); }
   input[type="text"], input[type="number"] {
     width: 100%; padding: 6px 8px; border: 1px solid var(--rule-strong); border-radius: 3px;
     background: var(--sheet); color: var(--graphite); font: 13px var(--mono); }
@@ -195,7 +200,7 @@
 
 <header class="top">
   <h1>Pradana Engine</h1>
-  <span class="sub">Solver elemen hingga 6-DOF: flat shell, plate Suhendro, CST, BDR</span>
+  <span class="sub">Solver elemen hingga 6-DOF: frame, truss, grid, flat shell, plate, CST, BDR</span>
   <div class="right">
     <a class="home" id="home" href="/" hidden>← rizki haikal</a>
     <span id="engine" data-state="loading" role="status" aria-live="polite">engine: memuat…</span>
@@ -210,8 +215,17 @@
       <label class="drop" id="drop">
         <input id="file" type="file" accept=".xlsx,.xlsm">
         <span class="what" id="drop-what">Pilih file Excel</span>
-        <span class="how" id="drop-how">atau seret ke sini · .xlsx / .xlsm berisi sheet Geometry 2D dan Define Material</span>
+        <span class="how" id="drop-how">atau seret ke sini · .xlsx / .xlsm dengan sheet Define Geometry (frame/truss/grid) dan/atau Geometry 2D (shell, plate, CST, BDR)</span>
       </label>
+      <div class="parts">
+        <label for="parts">Sheet yang dihitung</label>
+        <select id="parts">
+          <option value="all">Semua (1D + 2D digabung)</option>
+          <option value="1d">Hanya 1D: frame, truss, grid</option>
+          <option value="2d">Hanya 2D: shell, plate, CST, BDR</option>
+        </select>
+        <span class="help">Pilih salah satu kalau workbook berisi dua model yang tidak saling terhubung.</span>
+      </div>
       <details>
         <summary>Cetak matriks kekakuan ke Excel</summary>
         <div class="opts">
@@ -311,12 +325,18 @@
 <script type="text/plain" id="solver-src">"""
 ===============================================================================
  PRADANA ENGINE - SOLVER PYTHON (scipy.sparse)
- Port dari Elemen3D.bas: CST, BDR, PLATE BENDING (Suhendro), FLAT SHELL 24-DOF
- Arsitektur 6 DOF per node: Ux, Uy, Uz, Rx, Ry, Rz
+ Port dari Element1D.bas + Elemen3D.bas:
+   1D : TRUSS 3D, FRAME 3D, GRID
+   2D : CST, BDR, PLATE BENDING (Suhendro), FLAT SHELL 24-DOF
+ Arsitektur 6 DOF per node: Ux, Uy, Uz, Rx, Ry, Rz. Sumbu global Z = vertikal.
 
- Input : workbook Excel (.xlsx / .xlsm) dengan layout yang sama seperti VBA
-         - Sheet "Geometry 2D"     : data mulai baris 6
-         - Sheet "Define Material" : data mulai baris 5
+ Input : workbook Excel (.xlsx / .xlsm) dengan layout yang sama seperti VBA.
+         Boleh berisi set sheet 1D, set sheet 2D/shell, atau keduanya
+         (node dengan ID sama dipakai bersama, jadi frame + shell bisa digabung).
+         - 1D : "Define Geometry" (data mulai baris 6),
+                "Define Material-Section" (data mulai baris 5)
+         - 2D : "Geometry 2D" (data mulai baris 6),
+                "Define Material" (data mulai baris 5)
  Output: workbook .xlsx baru (displacement, reaksi, hasil elemen, dst.)
 
  Pemakaian:
@@ -325,6 +345,7 @@
    python pradana_solver.py input.xlsx --print-k                  (sheet stiffness format VBA)
    python pradana_solver.py input.xlsx --print-k --k-elems "224,300-310"
    python pradana_solver.py input.xlsx --show --scale 50          (jendela 3D deformed shape)
+   python pradana_solver.py input.xlsx --model 1d                 (hanya sheet frame/truss/grid)
    python pradana_solver.py --template template_input.xlsx
 ===============================================================================
 """
@@ -353,6 +374,17 @@ C_TRAC = 30   # AD: El. ID, Node A, Node B, qxA, qxB, qyA, qyB, qzA, qzB
 C_BODY = 40   # AN: El. ID, bx, by, bz
 C_QUERY = 44  # AR: El. ID, X, Y
 
+# Kolom sheet 1D "Define Geometry" (1-based, sama dengan Element1D.bas)
+SH_GEOM_1D = "Define Geometry"
+SH_MATSEC_1D = "Define Material-Section"
+C1_NODE = 2     # B : ID, X, Y, Z
+C1_REST = 7     # G : Node ID, Ux, Uy, Uz, Rx, Ry, Rz
+C1_ELEM = 14    # N : alpha (deg), El. ID, Node i, Node j, ID Section, Type
+C1_NLOAD = 20   # T : Node ID, Fx, Fy, Fz, Mx, My, Mz
+C1_DIST = 28    # AB: El. ID, q  (beban merata arah Z global, negatif = ke bawah)
+C1_POINT = 31   # AE: El. ID, jarak dari i, P (arah Z global, negatif = ke bawah)
+LINE_TYPES = ("FRAME", "TRUSS", "GRID")
+
 DOF_NAMES = ("Ux", "Uy", "Uz", "Rx", "Ry", "Rz")
 GP = 1.0 / math.sqrt(3.0)
 AUTOLOCK_TOL = 1e-12
@@ -377,12 +409,28 @@ class Material:
 
 
 @dataclass
+class Section:
+    sid: int
+    mid: int
+    E: float
+    nu: float
+    A: float
+    Iz: float
+    Iy: float
+    J: float
+
+    @property
+    def G(self):
+        return self.E / (2 * (1 + self.nu))
+
+
+@dataclass
 class Element:
     uid: int            # El. ID dari user
     sub: str            # "" / "A" / "B" (CST quad dipecah 2)
-    etype: str          # CST / BDR / PLATE / SHELL
+    etype: str          # CST / BDR / PLATE / SHELL / FRAME / TRUSS / GRID
     nodes: list         # node ID user
-    mat: Material
+    mat: object         # Material (2D) atau Section (1D)
     idx: np.ndarray = None   # index node internal
     dofs: np.ndarray = None  # DOF global (0-based)
     ke: np.ndarray = None
@@ -404,6 +452,9 @@ class Model:
     tractions: list
     body_forces: list
     queries: list
+    line_ids: dict = field(default_factory=dict)   # El. ID 1D -> index elemen
+    dist_loads: list = field(default_factory=list)
+    point_loads: list = field(default_factory=list)
     warnings: list = field(default_factory=list)
 
     @property
@@ -454,52 +505,82 @@ def _block(rows, col, width):
     return out
 
 
-def read_model(path):
+def _sheet_rows(wb, name, first_row, max_col):
+    return list(wb[name].iter_rows(min_row=first_row, max_col=max_col, values_only=True))
+
+
+def read_model(path, parts="all"):
+    """parts: "all" (gabung sheet 1D + 2D), "1d" (frame/truss/grid saja), "2d" (CST/BDR/plate/shell saja)."""
     import openpyxl
     print(f"Membaca input: {path}")
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
-    for sh in (SH_GEOM, SH_MAT):
-        if sh not in wb.sheetnames:
+    has2d = SH_GEOM in wb.sheetnames and parts in ("all", "2d")
+    has1d = SH_GEOM_1D in wb.sheetnames and parts in ("all", "1d")
+    if not (has1d or has2d):
+        raise PradanaError(f"Tidak ada sheet '{SH_GEOM}' (2D/shell) maupun '{SH_GEOM_1D}' (frame/truss/grid).")
+    for need, sh in ((has2d, SH_MAT), (has1d, SH_MATSEC_1D)):
+        if need and sh not in wb.sheetnames:
             raise PradanaError(f"Sheet '{sh}' tidak ditemukan.")
 
-    # ---------------- MATERIAL ----------------
-    mats = {}
-    for r in wb[SH_MAT].iter_rows(min_row=MAT_FIRST_ROW, max_col=7, values_only=True):
-        r = list(r) + [None] * (7 - len(r))
-        if not _is_id(r[1]):
-            continue
-        mid = int(_num(r[1]))
-        plane = "STRAIN" if str(r[6] or "").strip().upper().startswith("STRAIN") else "STRESS"
-        mats[mid] = Material(mid, _num(r[2]), _num(r[3]), _num(r[4]), _num(r[5]), plane)
-    if not mats:
-        raise PradanaError("Material kosong.")
+    # ---------------- MATERIAL & SECTION ----------------
+    mats, secs = {}, {}
+    if has2d:
+        for r in _sheet_rows(wb, SH_MAT, MAT_FIRST_ROW, 7):
+            r = list(r) + [None] * (7 - len(r))
+            if not _is_id(r[1]):
+                continue
+            mid = int(_num(r[1]))
+            plane = "STRAIN" if str(r[6] or "").strip().upper().startswith("STRAIN") else "STRESS"
+            mats[mid] = Material(mid, _num(r[2]), _num(r[3]), _num(r[4]), _num(r[5]), plane)
+        if not mats:
+            raise PradanaError("Material 2D kosong.")
+    if has1d:
+        rows_ms = _sheet_rows(wb, SH_MATSEC_1D, MAT_FIRST_ROW, 10)
+        mat1d = {int(_num(r[0])): (_num(r[1]), _num(r[2])) for r in _block(rows_ms, 2, 3)}
+        for r in _block(rows_ms, 5, 6):
+            sid, mid = int(_num(r[0])), int(_num(r[1]))
+            if mid not in mat1d:
+                raise PradanaError(f"Section {sid}: material {mid} tidak ada di tabel material 1D.")
+            E, nu = mat1d[mid]
+            secs[sid] = Section(sid, mid, E, nu, _num(r[2]), _num(r[3]), _num(r[4]), _num(r[5]))
 
-    # ---------------- GEOMETRY ----------------
-    wsg = wb[SH_GEOM]
-    self_weight = str(wsg["C2"].value or "").strip().upper() == "Y"
-    rows = list(wsg.iter_rows(min_row=GEOM_FIRST_ROW, max_col=C_QUERY + 2, values_only=True))
+    rows2 = _sheet_rows(wb, SH_GEOM, GEOM_FIRST_ROW, C_QUERY + 2) if has2d else []
+    rows1 = _sheet_rows(wb, SH_GEOM_1D, GEOM_FIRST_ROW, C1_POINT + 2) if has1d else []
+    self_weight = has2d and str(wb[SH_GEOM]["C2"].value or "").strip().upper() == "Y"
     wb.close()
 
-    node_rows = _block(rows, C_NODE, 4)
-    if len(node_rows) < 3:
-        raise PradanaError("Minimal butuh 3 node.")
-    node_ids = np.array([int(_num(r[0])) for r in node_rows], dtype=np.int64)
-    if len(set(node_ids.tolist())) != len(node_ids):
-        raise PradanaError("Ada Node ID ganda.")
-    xyz = np.array([[_num(r[1]), _num(r[2]), _num(r[3])] for r in node_rows], dtype=float)
+    # ---------------- NODE (gabungan 1D + 2D) ----------------
+    coords = {}
+    for rows, col, src in ((rows1, C1_NODE, SH_GEOM_1D), (rows2, C_NODE, SH_GEOM)):
+        seen = set()
+        for r in _block(rows, col, 4):
+            nid, p = int(_num(r[0])), (_num(r[1]), _num(r[2]), _num(r[3]))
+            if nid in seen:
+                raise PradanaError(f"Node ID {nid} ganda di sheet '{src}'.")
+            seen.add(nid)
+            if nid in coords and not np.allclose(coords[nid], p, rtol=0, atol=1e-9):
+                raise PradanaError(f"Node {nid} punya koordinat berbeda di sheet 1D dan 2D. Kalau keduanya "
+                                   f"model terpisah, hitung salah satu saja (CLI: --model 1d / 2d; web: pilihan \"Sheet yang dihitung\").")
+            coords[nid] = p
+    if len(coords) < 2:
+        raise PradanaError("Minimal butuh 2 node.")
+    node_ids = np.array(list(coords), dtype=np.int64)
+    xyz = np.array([coords[n] for n in node_ids], dtype=float)
     nid2idx = {int(n): i for i, n in enumerate(node_ids)}
 
     model = Model(self_weight, mats, node_ids, xyz, nid2idx,
                   np.zeros((len(node_ids), 6), dtype=bool), [], {}, [], [], [], [])
 
-    for r in _block(rows, C_REST, 7):
-        nid = int(_num(r[0]))
-        if nid not in nid2idx:
-            model.warn(f"Restraint: node {nid} tidak ada, diabaikan.")
-            continue
-        model.restr[nid2idx[nid]] = [_num(v) == 1 for v in r[1:7]]
+    for rows, col in ((rows1, C1_REST), (rows2, C_REST)):
+        for r in _block(rows, col, 7):
+            nid = int(_num(r[0]))
+            if nid not in nid2idx:
+                model.warn(f"Restraint: node {nid} tidak ada, diabaikan.")
+                continue
+            model.restr[nid2idx[nid]] |= np.array([_num(v) == 1 for v in r[1:7]])
 
-    for r in _block(rows, C_ELEM, 7):
+    # ---------------- ELEMEN 2D ----------------
+    for r in _block(rows2, C_ELEM, 7):
         uid = int(_num(r[0]))
         typ = str(r[1] or "").strip().upper()
         ni, nj, nk, nl = (int(_num(v)) for v in r[2:6])
@@ -524,20 +605,49 @@ def read_model(path):
             el.idx = np.array([nid2idx[n] for n in nodes], dtype=np.int64)
             model.uid2elems[uid].append(len(model.elems))
             model.elems.append(el)
+
+    # ---------------- ELEMEN 1D ----------------
+    for row in rows1:
+        r = list(row[C1_ELEM - 1:C1_ELEM + 5]) + [None] * 6
+        if not _is_id(r[1]):
+            continue
+        alpha, uid, ni, nj, sid = _num(r[0]), int(_num(r[1])), int(_num(r[2])), int(_num(r[3])), int(_num(r[4]))
+        typ = str(r[5] or "").strip().upper() or "FRAME"
+        if uid in model.line_ids:
+            raise PradanaError(f"El. ID 1D {uid} ganda.")
+        if typ not in LINE_TYPES:
+            model.warn(f"Elemen 1D {uid}: tipe '{typ}' tidak dikenal (FRAME/TRUSS/GRID), dilewati.")
+            continue
+        if sid not in secs:
+            raise PradanaError(f"Elemen 1D {uid}: section {sid} tidak didefinisikan.")
+        for n in (ni, nj):
+            if n not in nid2idx:
+                raise PradanaError(f"Elemen 1D {uid}: node {n} tidak ada di Input Node.")
+        if ni == nj:
+            raise PradanaError(f"Elemen 1D {uid}: node i dan j sama.")
+        el = Element(uid, "", typ, [ni, nj], secs[sid])
+        el.idx = np.array([nid2idx[ni], nid2idx[nj]], dtype=np.int64)
+        el.info["alpha_deg"] = alpha
+        model.line_ids[uid] = len(model.elems)
+        model.elems.append(el)
     if not model.elems:
         raise PradanaError("Elemen belum diinput.")
 
-    model.nodal_loads = [[int(_num(r[0]))] + [_num(v) for v in r[1:7]] for r in _block(rows, C_NLOAD, 7)]
+    # ---------------- BEBAN ----------------
+    for rows, col in ((rows1, C1_NLOAD), (rows2, C_NLOAD)):
+        model.nodal_loads += [[int(_num(r[0]))] + [_num(v) for v in r[1:7]] for r in _block(rows, col, 7)]
+    model.dist_loads = [[int(_num(r[0])), _num(r[1])] for r in _block(rows1, C1_DIST, 2)]
+    model.point_loads = [[int(_num(r[0])), _num(r[1]), _num(r[2])] for r in _block(rows1, C1_POINT, 3)]
     model.tractions = [[int(_num(r[0])), int(_num(r[1])), int(_num(r[2]))] + [_num(v) for v in r[3:9]]
-                       for r in _block(rows, C_TRAC, 9)]
-    model.body_forces = [[int(_num(r[0]))] + [_num(v) for v in r[1:4]] for r in _block(rows, C_BODY, 4)]
-    model.queries = [[int(_num(r[0])), _num(r[1]), _num(r[2])] for r in _block(rows, C_QUERY, 3)]
+                       for r in _block(rows2, C_TRAC, 9)]
+    model.body_forces = [[int(_num(r[0]))] + [_num(v) for v in r[1:4]] for r in _block(rows2, C_BODY, 4)]
+    model.queries = [[int(_num(r[0])), _num(r[1]), _num(r[2])] for r in _block(rows2, C_QUERY, 3)]
 
     cnt = {}
     for e in model.elems:
         cnt[e.etype] = cnt.get(e.etype, 0) + 1
-    print(f"  {len(node_ids)} node, {len(model.uid2elems)} elemen fisik "
-          f"({', '.join(f'{k}={v}' for k, v in cnt.items())}), {len(mats)} material, "
+    print(f"  {len(node_ids)} node, {len(model.uid2elems) + len(model.line_ids)} elemen fisik "
+          f"({', '.join(f'{k}={v}' for k, v in cnt.items())}), {len(mats)} material 2D, {len(secs)} section 1D, "
           f"self-weight={'Y' if self_weight else 'N'}")
     return model
 
@@ -834,6 +944,142 @@ def build_shell(el, xyz, model):
 
 
 # =============================================================================
+# ELEMEN 1D: FRAME 3D, TRUSS 3D, GRID (12-DOF lokal: u, v, w, Rx, Ry, Rz di i dan j)
+# =============================================================================
+def line_frame(Pi, Pj, alpha_deg):
+    """Matriks rotasi R (baris = sumbu lokal x, y, z dalam koordinat global).
+
+    Konvensi (global Z vertikal): x lokal searah i -> j. Untuk elemen tidak
+    vertikal, z lokal = komponen +Z global yang tegak lurus x (selalu ke atas),
+    y lokal = z x x. Untuk elemen vertikal, y lokal = +Y global, z = x x y.
+    Lalu y dan z diputar alpha derajat terhadap x lokal.
+    """
+    v = Pj - Pi
+    L = float(np.linalg.norm(v))
+    if L < 1e-12:
+        raise PradanaError("panjang elemen nol")
+    ex = v / L
+    if math.hypot(ex[0], ex[1]) < 1e-9:
+        ey = np.array([0.0, 1.0, 0.0])
+        ez = np.cross(ex, ey)
+    else:
+        ez = np.array([0.0, 0.0, 1.0]) - ex * ex[2]
+        ez /= np.linalg.norm(ez)
+        ey = np.cross(ez, ex)
+    a = math.radians(alpha_deg)
+    ca, sa = math.cos(a), math.sin(a)
+    ey, ez = ca * ey + sa * ez, -sa * ey + ca * ez
+    return np.vstack([ex, ey, ez]), L
+
+
+def line_k_local(etype, sec, L):
+    E, G, A, Iz, Iy, J = sec.E, sec.G, sec.A, sec.Iz, sec.Iy, sec.J
+    k = np.zeros((12, 12))
+
+    def put(idx, m):
+        k[np.ix_(idx, idx)] += m
+
+    if etype in ("FRAME", "TRUSS"):
+        put([0, 6], E * A / L * np.array([[1, -1], [-1, 1]]))
+    if etype in ("FRAME", "GRID"):
+        put([3, 9], G * J / L * np.array([[1, -1], [-1, 1]]))
+        # lentur bidang x-z (w, Ry), Ry = -dw/dx
+        c = E * Iy / L ** 3
+        put([2, 4, 8, 10], c * np.array([[12, -6 * L, -12, -6 * L],
+                                         [-6 * L, 4 * L * L, 6 * L, 2 * L * L],
+                                         [-12, 6 * L, 12, 6 * L],
+                                         [-6 * L, 2 * L * L, 6 * L, 4 * L * L]]))
+    if etype == "FRAME":
+        # lentur bidang x-y (v, Rz), Rz = dv/dx
+        c = E * Iz / L ** 3
+        put([1, 5, 7, 11], c * np.array([[12, 6 * L, -12, 6 * L],
+                                         [6 * L, 4 * L * L, -6 * L, 2 * L * L],
+                                         [-12, -6 * L, 12, -6 * L],
+                                         [6 * L, 2 * L * L, -6 * L, 4 * L * L]]))
+    return k
+
+
+def build_line(el, xyz):
+    try:
+        R, L = line_frame(xyz[el.idx[0]], xyz[el.idx[1]], el.info.get("alpha_deg", 0.0))
+    except PradanaError as ex:
+        raise PradanaError(f"Elemen {el.etype} {el.uid}: {ex}")
+    sec = el.mat
+    if sec.E <= 0:
+        raise PradanaError(f"Elemen {el.etype} {el.uid}: E section {sec.sid} harus > 0.")
+    kl = line_k_local(el.etype, sec, L)
+    T = np.kron(np.eye(4), R)
+    el.ke = T.T @ kl @ T
+    el.area = L
+    el.dofs = node_dofs(el.idx, [0, 1, 2, 3, 4, 5])
+    el.info.update(R=R, T=T, L=L, kl=kl, fer=np.zeros(12), ends=(xyz[el.idx[0]].copy(), xyz[el.idx[1]].copy()))
+
+
+def line_fer_uniform(etype, w, L):
+    """FER lokal (gaya dari tumpuan jepit ke elemen) akibat beban merata w = (wx, wy, wz)."""
+    wx, wy, wz = w
+    f = np.zeros(12)
+    f[[0, 6]] = -wx * L / 2
+    f[[1, 7]] = -wy * L / 2
+    f[[2, 8]] = -wz * L / 2
+    if etype in ("FRAME", "GRID"):
+        f[4], f[10] = wz * L * L / 12, -wz * L * L / 12
+    if etype == "FRAME":
+        f[5], f[11] = -wy * L * L / 12, wy * L * L / 12
+    return f
+
+
+def line_fer_point(etype, P, a, L):
+    """FER lokal akibat beban titik P = (Px, Py, Pz) sejauh a dari node i."""
+    Px, Py, Pz = P
+    b = L - a
+    f = np.zeros(12)
+    f[0], f[6] = -Px * b / L, -Px * a / L
+    if etype == "TRUSS":
+        # sendi-sendi: transversal dibagi seperti balok sederhana
+        f[1], f[7] = -Py * b / L, -Py * a / L
+        f[2], f[8] = -Pz * b / L, -Pz * a / L
+        return f
+    s1, s2 = b * b * (3 * a + b) / L ** 3, a * a * (a + 3 * b) / L ** 3
+    m1, m2 = a * b * b / L ** 2, a * a * b / L ** 2
+    f[2], f[8] = -Pz * s1, -Pz * s2
+    f[4], f[10] = Pz * m1, -Pz * m2
+    if etype == "FRAME":
+        f[1], f[7] = -Py * s1, -Py * s2
+        f[5], f[11] = -Py * m1, Py * m2
+    else:  # GRID: tidak ada kekakuan di bidang x-y, gaya y diteruskan sebagai beban sendi
+        f[1], f[7] = -Py * b / L, -Py * a / L
+    return f
+
+
+def line_end_forces(el, U):
+    """Gaya ujung elemen di sumbu lokal: k_l T u + FER (konvensi gaya pada elemen)."""
+    return el.info["kl"] @ (el.info["T"] @ U[el.dofs]) + el.info["fer"]
+
+
+def line_samples(el, U, n=11):
+    """Titik sepanjang elemen dan perpindahannya (global) untuk menggambar bentuk deformasi."""
+    R, L = el.info["R"], el.info["L"]
+    d = el.info["T"] @ U[el.dofs]
+    xi = np.linspace(0.0, 1.0, n)
+    u = (1 - xi) * d[0] + xi * d[6]
+    if el.etype == "TRUSS":
+        v = (1 - xi) * d[1] + xi * d[7]
+        w = (1 - xi) * d[2] + xi * d[8]
+    else:
+        N1, N2 = 1 - 3 * xi ** 2 + 2 * xi ** 3, L * (xi - 2 * xi ** 2 + xi ** 3)
+        N3, N4 = 3 * xi ** 2 - 2 * xi ** 3, L * (-xi ** 2 + xi ** 3)
+        w = N1 * d[2] - N2 * d[4] + N3 * d[8] - N4 * d[10]
+        if el.etype == "FRAME":
+            v = N1 * d[1] + N2 * d[5] + N3 * d[7] + N4 * d[11]
+        else:
+            v = (1 - xi) * d[1] + xi * d[7]
+    Pi, Pj = el.info["ends"]
+    base = np.outer(1 - xi, Pi) + np.outer(xi, Pj)
+    return base, np.column_stack([u, v, w]) @ R
+
+
+# =============================================================================
 # ASSEMBLY
 # =============================================================================
 def assemble(model):
@@ -847,6 +1093,8 @@ def assemble(model):
                 build_bdr(el, model.xyz)
             elif el.etype == "PLATE":
                 build_plate(el, model.xyz)
+            elif el.etype in LINE_TYPES:
+                build_line(el, model.xyz)
             else:
                 build_shell(el, model.xyz, model)
         except PradanaError:
@@ -948,6 +1196,30 @@ def build_loads(model):
                 _plate_uniform(F, el, b[2] * el.mat.t, xyz)
             else:
                 _lumped(F, el, b * el.area * el.mat.t)
+
+    # D. Beban elemen 1D (arah Z global, negatif = ke bawah). FER dijumlah dulu per
+    #    elemen, beban nodal ekuivalen -T^T FER ditambahkan sekali saja.
+    touched = set()
+    for kind, rows in (("merata", model.dist_loads), ("titik", model.point_loads)):
+        for r in rows:
+            uid = r[0]
+            if uid not in model.line_ids:
+                model.warn(f"Beban {kind}: elemen 1D {uid} tidak ada, diabaikan.")
+                continue
+            el = model.elems[model.line_ids[uid]]
+            L, R = el.info["L"], el.info["R"]
+            if kind == "merata":
+                el.info["fer"] += line_fer_uniform(el.etype, R @ np.array([0.0, 0.0, r[1]]), L)
+            else:
+                a = r[1]
+                if not 0 <= a <= L:
+                    model.warn(f"Beban titik elemen {uid}: jarak {a} di luar panjang elemen {L:.4g}, diabaikan.")
+                    continue
+                el.info["fer"] += line_fer_point(el.etype, R @ np.array([0.0, 0.0, r[2]]), a, L)
+            touched.add(model.line_ids[uid])
+    for k in touched:
+        el = model.elems[k]
+        F[el.dofs] -= el.info["T"].T @ el.info["fer"]
     return F
 
 
@@ -964,7 +1236,10 @@ def solve(model, K, F):
     free = np.flatnonzero(~restr)
     rest = np.flatnonzero(restr)
     if free.size == 0:
-        raise PradanaError("Semua DOF tertahan.")
+        # Semua DOF ditahan: tidak ada perpindahan, reaksi = -F (mis. balok jepit-jepit dengan beban elemen)
+        model.warn("Semua DOF tertahan: perpindahan nol, reaksi = -F.")
+        U = np.zeros(model.ndof)
+        return U, -F * restr, restr, auto, 0.0
 
     K11 = K[free][:, free].tocsc()
     t0 = time.time()
@@ -1009,10 +1284,20 @@ def _plate_eval(el, d, x, y):
 
 
 def postprocess(model, U):
-    plane_rows, shell_rows, query_rows = [], [], []
+    plane_rows, shell_rows, query_rows, line_rows = [], [], [], []
     for el in model.elems:
         d = U[el.dofs]
-        if el.etype == "CST":
+        if el.etype in LINE_TYPES:
+            f = line_end_forces(el, U)
+            row = {"El. ID": el.uid, "Tipe": el.etype, "Node i": el.nodes[0], "Node j": el.nodes[1],
+                   "Section": el.mat.sid, "L": el.info["L"]}
+            for end, o in (("i", 0), ("j", 6)):
+                for k, nm in enumerate(("N", "Vy", "Vz", "Tx", "My", "Mz")):
+                    row[f"{nm}_{end}"] = f[o + k]
+            row["N tarik(+)"] = f[6]
+            el.info["end_forces"] = f
+            line_rows.append(row)
+        elif el.etype == "CST":
             sig = el.info["D"] @ (el.info["B"] @ d)
             plane_rows.append(_row_plane(el, sig))
         elif el.etype == "BDR":
@@ -1088,13 +1373,14 @@ def postprocess(model, U):
                 break
             base.update(r)
             query_rows.append(base)
-    return plane_rows, shell_rows, query_rows
+    return plane_rows, shell_rows, query_rows, line_rows
 
 
 # =============================================================================
 # OUTPUT
 # =============================================================================
-def write_output(path, model, F, U, Rvec, restr, auto, plane_rows, shell_rows, query_rows, info, stiff=None):
+def write_output(path, model, F, U, Rvec, restr, auto, plane_rows, shell_rows, query_rows, info, stiff=None,
+                 line_rows=None):
     import pandas as pd
     nid = model.node_ids
     U6 = U.reshape(-1, 6)
@@ -1123,7 +1409,7 @@ def write_output(path, model, F, U, Rvec, restr, auto, plane_rows, shell_rows, q
     summary = [
         ("Input", info["input"]),
         ("Jumlah node", len(nid)),
-        ("Jumlah elemen fisik", len(model.uid2elems)),
+        ("Jumlah elemen fisik", len(model.uid2elems) + len(model.line_ids)),
         ("Jumlah elemen internal", len(model.elems)),
         ("Total DOF", model.ndof),
         ("DOF bebas", int((~restr).sum())),
@@ -1148,6 +1434,15 @@ def write_output(path, model, F, U, Rvec, restr, auto, plane_rows, shell_rows, q
         disp.to_excel(xw, sheet_name="Displacement", index=False)
         reac.to_excel(xw, sheet_name="Reactions", index=False)
         load.to_excel(xw, sheet_name="Load Vector", index=False)
+        if line_rows:
+            note = pd.DataFrame({"Catatan": [
+                "Gaya ujung elemen di sumbu lokal (gaya yang bekerja PADA elemen), sama seperti output VBA.",
+                "x lokal: node i -> j. z lokal: ke atas (komponen +Z global), y lokal = z x x. "
+                "Elemen vertikal: y lokal = +Y global.",
+                "N_i negatif = tarik. Kolom 'N tarik(+)' = N_j (positif tarik). "
+                "Momen mengikuti aturan tangan kanan sumbu lokal."]})
+            note.to_excel(xw, sheet_name="Frame Results", index=False)
+            pd.DataFrame(line_rows).to_excel(xw, sheet_name="Frame Results", index=False, startrow=5)
         if shell_rows:
             pd.DataFrame(shell_rows).to_excel(xw, sheet_name="Shell Results", index=False)
         if plane_rows:
@@ -1177,7 +1472,10 @@ def write_output(path, model, F, U, Rvec, restr, auto, plane_rows, shell_rows, q
 XL_MAX_COLS = 16384
 XL_MAX_ROWS = 1048576
 ELEM_TITLE = {"CST": "Matriks Elemen CST - ID ", "BDR": "Matriks Elemen BDR - ID ",
-              "PLATE": "Matriks Elemen PLATE BENDING  - ID ", "SHELL": "Matriks Elemen FLAT SHELL (24-DOF) - ID "}
+              "PLATE": "Matriks Elemen PLATE BENDING  - ID ", "SHELL": "Matriks Elemen FLAT SHELL (24-DOF) - ID ",
+              "FRAME": "Elemen - ", "TRUSS": "Elemen - ", "GRID": "Elemen - "}
+LINE_TITLE = {"FRAME": " (Elemen 3D Frame)", "TRUSS": " (Elemen Truss)", "GRID": " (Elemen Grid)"}
+LOCAL_LBL = ["u_i", "v_i", "w_i", "rx_i", "ry_i", "rz_i", "u_j", "v_j", "w_j", "rx_j", "ry_j", "rz_j"]
 
 
 def parse_ids(text):
@@ -1251,12 +1549,25 @@ def write_stiffness_sheet(book, model, K, restr, k_max_dof=2000, elem_ids=None):
         if elem_ids is not None and el.uid not in elem_ids:
             continue
         nd = len(el.dofs)
-        need = nd + 6 + (32 if el.etype == "PLATE" else 0)
+        need = nd + 6 + (32 if el.etype == "PLATE" else 0) + (40 if el.etype in LINE_TYPES else 0)
         if r0 + need >= XL_MAX_ROWS:
             skipped += 1
             continue
-        ws.write(r0, 1, ELEM_TITLE[el.etype] + f"{el.uid}{el.sub}", f_el)
+        ws.write(r0, 1, ELEM_TITLE[el.etype] + f"{el.uid}{el.sub}" + LINE_TITLE.get(el.etype, ""), f_el)
         r0 += 2
+        if el.etype in LINE_TYPES:
+            sec, L = el.mat, el.info["L"]
+            ws.write(r0, 1, f"L = {L:.6g}   EA/L = {sec.E * sec.A / L:.6g}   GJ/L = {sec.G * sec.J / L:.6g}   "
+                            f"EIz/L = {sec.E * sec.Iz / L:.6g}   EIy/L = {sec.E * sec.Iy / L:.6g}   "
+                            f"alpha = {el.info.get('alpha_deg', 0):g} deg", f_bold)
+            r0 += 2
+            ws.write(r0, 1, "Mat Kekakuan Elemen Lokal [Kl] (12x12):", f_ke)
+            last = matrix(r0 + 1, 1, LOCAL_LBL, LOCAL_LBL, lambda i: el.info["kl"][i], nd=3)
+            r0 = last + 3
+            ws.write(r0, 1, "Mat Transformasi Elemen [T] (12x12), R = baris sumbu lokal x, y, z:", f_ke)
+            glbl = [label(g) for g in el.dofs]
+            last = matrix(r0 + 1, 1, LOCAL_LBL, glbl, lambda i: el.info["T"][i], nd=4)
+            r0 = last + 3
         if el.etype == "PLATE":
             c1, c2, c3, c4 = el.info["c"]
             ws.write(r0, 1, f"Kekakuan Lentur [D] = {round(el.info['D_flex'], 2)}", f_bold)
@@ -1328,20 +1639,36 @@ def plot_deformed(model, U, png_path, scale=None, show=False):
         scale = 0.1 * diag / umax if umax > 0 else 1.0
     xyz_d = xyz + scale * U3
 
-    polys = [el.idx for el in model.elems]
-    und = [xyz[p] for p in polys]
-    dfm = [xyz_d[p] for p in polys]
+    from mpl_toolkits.mplot3d.art3d import Line3DCollection
     norm = colors.Normalize(vmin=0, vmax=umax if umax > 0 else 1)
-    face_val = np.array([umag[p].mean() for p in polys])
+    polys = [el.idx for el in model.elems if el.etype not in LINE_TYPES]
+    lines = [el for el in model.elems if el.etype in LINE_TYPES]
 
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111, projection="3d")
-    ax.add_collection3d(Poly3DCollection(und, facecolors=(0.75, 0.75, 0.75, 0.15),
-                                         edgecolors=(0.4, 0.4, 0.4, 0.6), linewidths=0.3, linestyles="--"))
-    ax.add_collection3d(Poly3DCollection(dfm, facecolors=cm.jet(norm(face_val)),
-                                         edgecolors="k", linewidths=0.15, alpha=0.95))
+    extra = []
+    if polys:
+        und = [xyz[p] for p in polys]
+        dfm = [xyz_d[p] for p in polys]
+        face_val = np.array([umag[p].mean() for p in polys])
+        ax.add_collection3d(Poly3DCollection(und, facecolors=(0.75, 0.75, 0.75, 0.15),
+                                             edgecolors=(0.4, 0.4, 0.4, 0.6), linewidths=0.3, linestyles="--"))
+        ax.add_collection3d(Poly3DCollection(dfm, facecolors=cm.jet(norm(face_val)),
+                                             edgecolors="k", linewidths=0.15, alpha=0.95))
+    if lines:
+        segs_u, segs_d, seg_val = [], [], []
+        for el in lines:
+            base, disp = line_samples(el, U)
+            pts = base + scale * disp
+            mag = np.linalg.norm(disp, axis=1)
+            segs_u.append([base[0], base[-1]])
+            segs_d += [[pts[k], pts[k + 1]] for k in range(len(pts) - 1)]
+            seg_val += list((mag[:-1] + mag[1:]) / 2)
+            extra.append(pts)
+        ax.add_collection3d(Line3DCollection(segs_u, colors=[(0.4, 0.4, 0.4, 0.7)], linewidths=1.0, linestyles="--"))
+        ax.add_collection3d(Line3DCollection(segs_d, colors=cm.jet(norm(np.array(seg_val))), linewidths=2.2))
 
-    allp = np.vstack([xyz, xyz_d])
+    allp = np.vstack([xyz, xyz_d] + extra)
     lo, hi = allp.min(0), allp.max(0)
     mid, half = (lo + hi) / 2, (hi - lo) / 2
     half = np.maximum(half, 1e-3 * max(half.max(), 1e-12))
@@ -1393,7 +1720,7 @@ def write_template(path):
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = SH_GEOM
-    ws["B1"] = "PRADANA ENGINE - UNIVERSAL 6-DOF (CST / BDR / PLATE / SHELL)"
+    ws["B1"] = "PRADANA ENGINE - UNIVERSAL 6-DOF (CST / BDR / PLATE / SHELL). Hapus set sheet yang tidak dipakai."
     ws["B1"].font = Font(bold=True, size=14)
     ws["B2"] = "Sertakan Berat Sendiri (Y/N):"
     ws["C2"] = "N"
@@ -1414,6 +1741,34 @@ def write_template(path):
             cell.font = Font(bold=True)
             cell.fill = fill
             cell.alignment = Alignment(horizontal="center")
+    w1 = wb.create_sheet(SH_GEOM_1D)
+    w1["B1"] = "PRADANA ENGINE - FRAME / TRUSS / GRID (sumbu Z global = vertikal)"
+    w1["B1"].font = Font(bold=True, size=14)
+    groups1 = [
+        (C1_NODE, "Input Node", ["ID", "X", "Y", "Z"]),
+        (C1_REST, "Restraint (1=tertahan)", ["Node ID", "Ux", "Uy", "Uz", "Rx", "Ry", "Rz"]),
+        (C1_ELEM, "Element", ["Rotasi sb. lokal alpha (deg)", "El. ID", "Node i ID", "Node j ID", "ID Section",
+                              "Type (FRAME/TRUSS/GRID)"]),
+        (C1_NLOAD, "Nodal Load", ["Node ID", "Fx", "Fy", "Fz", "Mx", "My", "Mz"]),
+        (C1_DIST, "Beban merata arah Z (neg = bawah)", ["El. ID", "q"]),
+        (C1_POINT, "Beban titik arah Z (neg = bawah)", ["El. ID", "Jarak dari i", "P"]),
+    ]
+    for c0, title, hdr in groups1:
+        w1.cell(4, c0, title).font = Font(bold=True)
+        for k, h in enumerate(hdr):
+            cell = w1.cell(5, c0 + k, h)
+            cell.font = Font(bold=True)
+            cell.fill = fill
+            cell.alignment = Alignment(horizontal="center", wrap_text=True)
+    w2 = wb.create_sheet(SH_MATSEC_1D)
+    w2["B1"] = "MATERIAL & SECTION 1D"
+    w2["B1"].font = Font(bold=True, size=14)
+    w2["B3"], w2["E3"] = "Material", "Section"
+    for k, h in enumerate(["ID Material", "E", "Nu", "ID Section", "ID Material", "A", "Iz", "Iy", "J"]):
+        cell = w2.cell(4, 2 + k, h)
+        cell.font = Font(bold=True)
+        cell.fill = fill
+
     wm = wb.create_sheet(SH_MAT)
     wm["B2"] = "MATERIAL & SECTION"
     wm["B2"].font = Font(bold=True, size=14)
@@ -1428,16 +1783,16 @@ def write_template(path):
 # =============================================================================
 # DRIVER
 # =============================================================================
-def analyze(input_path):
+def analyze(input_path, parts="all"):
     """Baca input, assembly, solve, post-process. Dipakai CLI dan versi web."""
     t0 = time.time()
-    model = read_model(input_path)
+    model = read_model(input_path, parts)
     K = assemble(model)
     F = build_loads(model)
     U, Rvec, restr, auto, res = solve(model, K, F)
-    plane_rows, shell_rows, query_rows = postprocess(model, U)
+    plane_rows, shell_rows, query_rows, line_rows = postprocess(model, U)
     return dict(model=model, K=K, F=F, U=U, Rvec=Rvec, restr=restr, auto=auto, res=res,
-                plane_rows=plane_rows, shell_rows=shell_rows, query_rows=query_rows, t0=t0)
+                plane_rows=plane_rows, shell_rows=shell_rows, query_rows=query_rows, line_rows=line_rows, t0=t0)
 
 
 def write_results(r, input_path, output_path, print_k=False, k_max_dof=2000, k_elems=None, plot_png=None,
@@ -1449,12 +1804,12 @@ def write_results(r, input_path, output_path, print_k=False, k_max_dof=2000, k_e
     if print_k:
         stiff = {"K": r["K"], "k_max_dof": k_max_dof, "elem_ids": parse_ids(k_elems) if k_elems else None}
     write_output(output_path, r["model"], r["F"], r["U"], r["Rvec"], r["restr"], r["auto"],
-                 r["plane_rows"], r["shell_rows"], r["query_rows"], info, stiff)
+                 r["plane_rows"], r["shell_rows"], r["query_rows"], info, stiff, r.get("line_rows"))
 
 
-def run(input_path, output_path=None, export_k=None, print_k=False, k_max_dof=2000, k_elems=None,
+def run(input_path, output_path=None, export_k=None, print_k=False, k_max_dof=2000, k_elems=None, parts="all",
         plot=True, plot_scale=None, show=False):
-    r = analyze(input_path)
+    r = analyze(input_path, parts)
     model, K, F, U, Rvec, t0 = r["model"], r["K"], r["F"], r["U"], r["Rvec"], r["t0"]
     if export_k:
         sp.save_npz(export_k, K)
@@ -1490,6 +1845,8 @@ def main(argv=None):
     ap.add_argument("--show", action="store_true", help="buka jendela 3D interaktif deformed shape")
     ap.add_argument("--scale", type=float, metavar="S", help="faktor skala deformasi (default otomatis)")
     ap.add_argument("--no-plot", action="store_true", help="jangan buat gambar deformed shape")
+    ap.add_argument("--model", choices=("all", "1d", "2d"), default="all",
+                    help="sheet yang dihitung: all = gabung 1D + 2D (default), 1d = frame/truss/grid, 2d = CST/BDR/plate/shell")
     ap.add_argument("--template", metavar="FILE.xlsx", help="buat template input kosong lalu keluar")
     a = ap.parse_args(argv)
     if a.template:
@@ -1498,7 +1855,7 @@ def main(argv=None):
     if not a.input:
         ap.error("butuh file input (atau --template)")
     try:
-        run(a.input, a.output, a.export_k, a.print_k, a.k_max_dof, a.k_elems,
+        run(a.input, a.output, a.export_k, a.print_k, a.k_max_dof, a.k_elems, a.model,
             plot=not a.no_plot, plot_scale=a.scale, show=a.show)
     except PradanaError as ex:
         print(f"\nERROR: {ex}")
@@ -1532,7 +1889,7 @@ self.onmessage = async (e) => {
     } else if (m.type === "run") {
       py.FS.writeFile(m.inPath, m.bytes);
       const fn = py.globals.get("web_run");
-      const json = fn(m.inPath, m.outPath, m.printK, m.kMax, m.kElems);
+      const json = fn(m.inPath, m.outPath, m.printK, m.kMax, m.kElems, m.parts);
       fn.destroy();
       const out = py.FS.readFile(m.outPath);
       post({ type: "done", json, out }, [out.buffer]);
@@ -1555,33 +1912,48 @@ const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.s
 const GLUE = `
 import json, numpy as np, pradana_solver as ps
 
-def web_run(in_path, out_path, print_k, k_max_dof, k_elems):
-    r = ps.analyze(in_path)
+def web_run(in_path, out_path, print_k, k_max_dof, k_elems, parts="all"):
+    r = ps.analyze(in_path, parts)
     ps.write_results(r, in_path, out_path, print_k, int(k_max_dof), k_elems or None)
     m, U = r["model"], r["U"].reshape(-1, 6)
     sh = iter(r["shell_rows"]); pl = iter(r["plane_rows"])
-    vm = [next(sh)["VM max"] if el.etype == "SHELL" else next(pl)["Von Mises"] for el in m.elems]
+    areas, area_vm, lines, vm = [], [], [], []
+    for el in m.elems:
+        if el.etype in ps.LINE_TYPES:
+            base, disp = ps.line_samples(el, r["U"])
+            lines.append({"b": base.tolist(), "d": disp.tolist()})
+            continue
+        v = next(sh)["VM max"] if el.etype == "SHELL" else next(pl)["Von Mises"]
+        areas.append(el.idx.tolist()); area_vm.append(v); vm.append((v, el.uid))
     restr = r["restr"].reshape(-1, 6)
     R6 = np.where(restr, r["Rvec"].reshape(-1, 6), 0)
     F6 = r["F"].reshape(-1, 6)
     umag = np.linalg.norm(U[:, :3], axis=1)
-    iu, ie = int(umag.argmax()), int(np.argmax(vm))
+    iu = int(umag.argmax())
+    vmmax, vmel = max(vm) if vm else (None, None)
     types = {}
     for el in m.elems:
         types[el.etype] = types.get(el.etype, 0) + 1
+    summary = [
+        ["DOF bebas", int((~r["restr"]).sum())], ["DOF ditahan", int(m.restr.sum())],
+        ["DOF dikunci otomatis", int(r["auto"].sum())], ["Berat sendiri (shell)", "ya" if m.self_weight else "tidak"],
+        ["Residual relatif", float(r["res"])],
+        ["max |Ux|", float(np.abs(U[:, 0]).max())], ["max |Uy|", float(np.abs(U[:, 1]).max())],
+        ["max |Uz|", float(np.abs(U[:, 2]).max())],
+    ]
+    for key, cols in (("max |N| batang", ("N_i", "N_j")), ("max |My| batang", ("My_i", "My_j")),
+                      ("max |Mz| batang", ("Mz_i", "Mz_j")), ("max |T| batang", ("Tx_i", "Tx_j"))):
+        if r["line_rows"]:
+            best = max(r["line_rows"], key=lambda row: max(abs(row[c]) for c in cols))
+            val = max(abs(best[c]) for c in cols)
+            summary.append([key, f"{val:.4g} @ el. {best['El. ID']}"])
     return json.dumps({
         "ids": m.node_ids.tolist(), "xyz": m.xyz.tolist(), "u": U[:, :3].tolist(),
-        "elems": [el.idx.tolist() for el in m.elems], "vm": vm,
-        "kpi": {"umax": float(umag[iu]), "unode": int(m.node_ids[iu]), "vmmax": float(vm[ie]),
-                "vmel": int(m.elems[ie].uid), "F": F6[:, :3].sum(0).tolist(), "R": R6[:, :3].sum(0).tolist(),
-                "ndof": m.ndof, "nnode": len(m.node_ids), "nel": len(m.uid2elems), "types": types},
-        "summary": [
-            ["DOF bebas", int((~r["restr"]).sum())], ["DOF ditahan", int(m.restr.sum())],
-            ["DOF dikunci otomatis", int(r["auto"].sum())], ["Berat sendiri", "ya" if m.self_weight else "tidak"],
-            ["Residual relatif", float(r["res"])],
-            ["max |Ux|", float(np.abs(U[:, 0]).max())], ["max |Uy|", float(np.abs(U[:, 1]).max())],
-            ["max |Uz|", float(np.abs(U[:, 2]).max())],
-        ],
+        "areas": areas, "vm": area_vm, "lines": lines,
+        "kpi": {"umax": float(umag[iu]), "unode": int(m.node_ids[iu]), "vmmax": vmmax, "vmel": vmel,
+                "F": F6[:, :3].sum(0).tolist(), "R": R6[:, :3].sum(0).tolist(),
+                "ndof": m.ndof, "nnode": len(m.node_ids), "nel": len(m.uid2elems) + len(m.line_ids), "types": types},
+        "summary": summary,
         "warnings": m.warnings[:100], "nwarn": len(m.warnings),
     })
 `;
@@ -1705,7 +2077,7 @@ function updateRun() {
 
 function runBytes(bytes, name) {
   if (!ready || running) return Promise.resolve(null);
-  file = file || { name, size: bytes.length };
+  if (!file || file.name !== name) file = { name, size: bytes.length };
   running = true; t0 = performance.now();
   $("note").hidden = true;
   $("log").textContent = "";
@@ -1716,7 +2088,8 @@ function runBytes(bytes, name) {
   const base = name.replace(/\.(xlsx|xlsm)$/i, "");
   const copy = bytes.slice();
   worker.postMessage({ type: "run", bytes: copy, inPath: "/tmp/input" + ext, outPath: "/tmp/" + base + "_hasil.xlsx",
-                       printK: $("printk").checked, kMax: Number($("kmax").value) || 2000, kElems: $("kelems").value.trim() },
+                       printK: $("printk").checked, kMax: Number($("kmax").value) || 2000, kElems: $("kelems").value.trim(),
+                       parts: $("parts").value },
                      [copy.buffer]);
   return new Promise((r) => { runResolve = r; });
 }
@@ -1777,7 +2150,7 @@ function renderSheet() {
     Object.keys(k.types).join("+");
   $("tb-dof").textContent = k.ndof.toLocaleString("id-ID");
   $("tb-u").textContent = `${fmt(k.umax)} @ node ${k.unode}`;
-  $("tb-vm").textContent = `${fmt(k.vmmax)} @ el. ${k.vmel}`;
+  $("tb-vm").textContent = k.vmmax === null ? "— (tidak ada elemen 2D)" : `${fmt(k.vmmax)} @ el. ${k.vmel}`;
 }
 
 /* ---------- Bidang gambar 3D ---------- */
@@ -1807,12 +2180,14 @@ function autoScale() {
   const diag = Math.hypot(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]) || 1;
   return result.kpi.umax > 0 ? 0.1 * diag / result.kpi.umax : 1;
 }
-function edgeTrace(P, color, width, dash, name) {
+function edgeTrace(P, color, width, dash, name, withLines) {
   const x = [], y = [], z = [];
-  for (const el of result.elems) {
-    for (let k = 0; k <= el.length; k++) { const p = P[el[k % el.length]]; x.push(p[0]); y.push(p[1]); z.push(p[2]); }
+  const push = (p) => { x.push(p[0]); y.push(p[1]); z.push(p[2]); };
+  for (const el of result.areas) {
+    for (let k = 0; k <= el.length; k++) push(P[el[k % el.length]]);
     x.push(null); y.push(null); z.push(null);
   }
+  if (withLines) for (const ln of result.lines) { push(ln.b[0]); push(ln.b[ln.b.length - 1]); x.push(null); y.push(null); z.push(null); }
   return { type: "scatter3d", mode: "lines", x, y, z, name, hoverinfo: "skip", line: { color, width, dash } };
 }
 function renderPlot(resetCam) {
@@ -1825,25 +2200,47 @@ function renderPlot(resetCam) {
   const xyz = result.xyz, u = result.u;
   const D = xyz.map((p, i) => [p[0] + s * u[i][0], p[1] + s * u[i][1], p[2] + s * u[i][2]]);
   const I = [], J = [], K = [], cellVal = [];
-  result.elems.forEach((el, e) => {
+  result.areas.forEach((el, e) => {
     const tris = el.length === 4 ? [[0, 1, 2], [0, 2, 3]] : [[0, 1, 2]];
     for (const t of tris) { I.push(el[t[0]]); J.push(el[t[1]]); K.push(el[t[2]]); cellVal.push(result.vm[e]); }
   });
   const pick = { ux: (d) => d[0], uy: (d) => d[1], uz: (d) => d[2] }[colorMode] || ((d) => Math.hypot(...d));
   const graphite = css("--graphite"), pencil = css("--pencil"), red = css("--red");
-  const traces = [{
+  const nodeVal = u.map(pick);
+  let cmin = Infinity, cmax = -Infinity;
+  const span = (v) => { if (v !== null && isFinite(v)) { cmin = Math.min(cmin, v); cmax = Math.max(cmax, v); } };
+  if (colorMode === "vm") cellVal.forEach(span); else { nodeVal.forEach(span); result.lines.forEach((ln) => ln.d.forEach((d) => span(pick(d)))); }
+  if (!(cmax > cmin)) { cmin = isFinite(cmin) ? cmin : 0; cmax = cmin + 1; }
+  const colorbar = { title: { text: CONTOUR_NAME[colorMode], side: "right", font: { family: "B612 Mono, monospace", size: 12 } },
+                     thickness: 10, len: 0.42, y: 0.98, yanchor: "top", x: 0.99, xanchor: "right", outlinewidth: 1,
+                     outlinecolor: graphite, tickfont: { family: "B612 Mono, monospace", size: 10.5 } };
+  const traces = [];
+  if (result.areas.length) traces.push({
     type: "mesh3d", x: D.map((p) => p[0]), y: D.map((p) => p[1]), z: D.map((p) => p[2]), i: I, j: J, k: K,
-    intensity: colorMode === "vm" ? cellVal : u.map(pick), intensitymode: colorMode === "vm" ? "cell" : "vertex",
-    colorscale: "Jet", flatshading: true, name: "Terdeformasi",
-    colorbar: { title: { text: CONTOUR_NAME[colorMode], side: "right", font: { family: "B612 Mono, monospace", size: 12 } },
-                thickness: 10, len: 0.42, y: 0.98, yanchor: "top", x: 0.99, xanchor: "right", outlinewidth: 1,
-                outlinecolor: graphite, tickfont: { family: "B612 Mono, monospace", size: 10.5 } },
+    intensity: colorMode === "vm" ? cellVal : nodeVal, intensitymode: colorMode === "vm" ? "cell" : "vertex",
+    cmin, cmax, colorscale: "Jet", flatshading: true, name: "Elemen 2D", colorbar,
     lighting: { ambient: 0.85, diffuse: 0.4, specular: 0.05 },
     text: result.ids.map((id, i) => `node ${id}<br>Ux ${u[i][0].toExponential(3)}<br>Uy ${u[i][1].toExponential(3)}<br>Uz ${u[i][2].toExponential(3)}`),
     hovertemplate: "%{text}<extra></extra>",
-  }];
-  if ($("showedge").checked) traces.push(edgeTrace(D, graphite, 1, "solid", "Mesh"));
-  if ($("showund").checked) traces.push(edgeTrace(xyz, pencil, 1.3, "dash", "Bentuk awal"));
+  });
+  if (result.lines.length) {
+    // Batang digambar melengkung (interpolasi Hermite dari solver), diwarnai per titik sampel
+    const x = [], y = [], z = [], c = [];
+    for (const ln of result.lines) {
+      ln.b.forEach((b, k) => {
+        const d = ln.d[k];
+        x.push(b[0] + s * d[0]); y.push(b[1] + s * d[1]); z.push(b[2] + s * d[2]); c.push(pick(d));
+      });
+      x.push(null); y.push(null); z.push(null); c.push(null);
+    }
+    const vmMode = colorMode === "vm";
+    traces.push({ type: "scatter3d", mode: "lines", x, y, z, name: "Elemen 1D", hoverinfo: "skip",
+                  line: vmMode ? { color: pencil, width: 5 }
+                               : { color: c, colorscale: "Jet", cmin, cmax, width: 6,
+                                   showscale: !result.areas.length, colorbar } });
+  }
+  if ($("showedge").checked && result.areas.length) traces.push(edgeTrace(D, graphite, 1, "solid", "Mesh", false));
+  if ($("showund").checked) traces.push(edgeTrace(xyz, pencil, 1.3, "dash", "Bentuk awal", true));
   const iu = result.ids.indexOf(result.kpi.unode);
   traces.push({ type: "scatter3d", mode: "markers", x: [D[iu][0]], y: [D[iu][1]], z: [D[iu][2]], name: "max |U|",
                 marker: { size: 5, color: red, symbol: "circle" },
