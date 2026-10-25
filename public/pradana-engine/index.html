@@ -213,9 +213,9 @@
     <section id="s-model" aria-labelledby="h-model">
       <h2 id="h-model">Model</h2>
       <label class="drop" id="drop">
-        <input id="file" type="file" accept=".xlsx,.xlsm">
+        <input id="file" type="file" accept=".xlsx,.xlsm,.xls">
         <span class="what" id="drop-what">Pilih file Excel</span>
-        <span class="how" id="drop-how">atau seret ke sini · .xlsx / .xlsm dengan sheet Define Geometry (frame/truss/grid) dan/atau Geometry 2D (shell, plate, CST, BDR)</span>
+        <span class="how" id="drop-how">atau seret ke sini · .xlsx / .xlsm / .xls dengan sheet Define Geometry (frame/truss/grid) dan/atau Geometry 2D (shell, plate, CST, BDR)</span>
       </label>
       <div class="parts">
         <label for="parts">Sheet yang dihitung</label>
@@ -330,7 +330,7 @@
    2D : CST, BDR, PLATE BENDING (Suhendro), FLAT SHELL 24-DOF
  Arsitektur 6 DOF per node: Ux, Uy, Uz, Rx, Ry, Rz. Sumbu global Z = vertikal.
 
- Input : workbook Excel (.xlsx / .xlsm) dengan layout yang sama seperti VBA.
+ Input : workbook Excel (.xlsx / .xlsm / .xls) dengan layout yang sama seperti VBA.
          Boleh berisi set sheet 1D, set sheet 2D/shell, atau keduanya
          (node dengan ID sama dipakai bersama, jadi frame + shell bisa digabung).
          - 1D : "Define Geometry" (data mulai baris 6),
@@ -505,15 +505,73 @@ def _block(rows, col, width):
     return out
 
 
+class _XlsSheet:
+    """Sheet .xls (xlrd) dengan antarmuka openpyxl yang dipakai read_model."""
+
+    class _Cell:
+        def __init__(self, value):
+            self.value = value
+
+    def __init__(self, sh):
+        self._sh = sh
+
+    @staticmethod
+    def _clean(v):
+        return None if v == "" else v
+
+    def iter_rows(self, min_row=1, max_col=None, values_only=True):
+        end = min(max_col, self._sh.ncols) if max_col else self._sh.ncols
+        for r in range(min_row - 1, self._sh.nrows):
+            yield tuple(self._clean(v) for v in self._sh.row_values(r, 0, end))
+
+    def __getitem__(self, ref):
+        col = row = 0
+        for ch in ref.upper():
+            if ch.isalpha():
+                col = col * 26 + ord(ch) - 64
+            else:
+                row = row * 10 + int(ch)
+        if row > self._sh.nrows or col > self._sh.ncols:
+            return self._Cell(None)
+        return self._Cell(self._clean(self._sh.cell_value(row - 1, col - 1)))
+
+
+class _XlsBook:
+    """Workbook Excel 97-2003 (.xls) dibaca lewat xlrd."""
+
+    def __init__(self, path):
+        try:
+            import xlrd
+        except ImportError:
+            raise PradanaError("File .xls butuh paket xlrd: pip install xlrd")
+        self._bk = xlrd.open_workbook(path, on_demand=True)
+        self.sheetnames = self._bk.sheet_names()
+
+    def __getitem__(self, name):
+        return _XlsSheet(self._bk.sheet_by_name(name))
+
+    def close(self):
+        self._bk.release_resources()
+
+
+def open_workbook(path):
+    """Buka .xlsx/.xlsm (openpyxl) atau .xls (xlrd). Format dideteksi dari isi file, bukan ekstensi."""
+    with open(path, "rb") as f:
+        head = f.read(8)
+    if head == b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":  # OLE2 = Excel 97-2003
+        return _XlsBook(path)
+    import openpyxl
+    return openpyxl.load_workbook(path, read_only=True, data_only=True)
+
+
 def _sheet_rows(wb, name, first_row, max_col):
     return list(wb[name].iter_rows(min_row=first_row, max_col=max_col, values_only=True))
 
 
 def read_model(path, parts="all"):
     """parts: "all" (gabung sheet 1D + 2D), "1d" (frame/truss/grid saja), "2d" (CST/BDR/plate/shell saja)."""
-    import openpyxl
     print(f"Membaca input: {path}")
-    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    wb = open_workbook(path)
     has2d = SH_GEOM in wb.sheetnames and parts in ("all", "2d")
     has1d = SH_GEOM_1D in wb.sheetnames and parts in ("all", "1d")
     if not (has1d or has2d):
@@ -1834,7 +1892,7 @@ def main(argv=None):
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="replace")
     ap = argparse.ArgumentParser(description="Pradana Engine - solver FEA 6-DOF (scipy.sparse)")
-    ap.add_argument("input", nargs="?", help="file Excel input (.xlsx/.xlsm)")
+    ap.add_argument("input", nargs="?", help="file Excel input (.xlsx/.xlsm/.xls)")
     ap.add_argument("-o", "--output", help="file Excel output (default: <input>_hasil.xlsx)")
     ap.add_argument("--export-k", metavar="K.npz", help="simpan matriks K global (sparse) ke .npz")
     ap.add_argument("--print-k", action="store_true",
@@ -1882,7 +1940,7 @@ self.onmessage = async (e) => {
       post({ type: "boot", step: 1 });
       await py.loadPackage(["numpy", "scipy", "pandas", "micropip"]);
       post({ type: "boot", step: 2 });
-      await py.pyimport("micropip").install(["openpyxl", "xlsxwriter"]);
+      await py.pyimport("micropip").install(["openpyxl", "xlsxwriter", "xlrd"]);
       py.FS.writeFile("/home/pyodide/pradana_solver.py", m.solver);
       await py.runPythonAsync(m.glue);
       post({ type: "ready" });
@@ -1977,7 +2035,7 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => them
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
 /* ---------- Langkah ---------- */
-const BOOT_STEPS = ["Pyodide", "NumPy, SciPy, pandas", "openpyxl, xlsxwriter"];
+const BOOT_STEPS = ["Pyodide", "NumPy, SciPy, pandas", "openpyxl, xlsxwriter, xlrd"];
 const RUN_STEPS = ["Baca input", "Rakit K", "Solve K11·U = F", "Hasil & tulis .xlsx"];
 let stepStart = 0, stepTimer = null;
 function setSteps(names) {
@@ -2055,7 +2113,7 @@ function onDone(m) {
   running = false;
   markStep(RUN_STEPS.length);
   result = JSON.parse(m.json);
-  const base = (file ? file.name : "model").replace(/\.(xlsx|xlsm)$/i, "");
+  const base = (file ? file.name : "model").replace(/\.(xlsx|xlsm|xls)$/i, "");
   if (outUrl) URL.revokeObjectURL(outUrl);
   outUrl = URL.createObjectURL(new Blob([m.out], { type: XLSX_MIME }));
   $("dl").href = outUrl; $("dl").download = base + "_hasil.xlsx"; $("dl").setAttribute("aria-disabled", "false");
@@ -2084,8 +2142,8 @@ function runBytes(bytes, name) {
   engine("busy", "menghitung");
   setSteps(RUN_STEPS); markStep(0);
   updateRun();
-  const ext = /\.xlsm$/i.test(name) ? ".xlsm" : ".xlsx";
-  const base = name.replace(/\.(xlsx|xlsm)$/i, "");
+  const ext = (name.match(/\.(xlsx|xlsm|xls)$/i) || [".xlsx"])[0].toLowerCase();
+  const base = name.replace(/\.(xlsx|xlsm|xls)$/i, "");
   const copy = bytes.slice();
   worker.postMessage({ type: "run", bytes: copy, inPath: "/tmp/input" + ext, outPath: "/tmp/" + base + "_hasil.xlsx",
                        printK: $("printk").checked, kMax: Number($("kmax").value) || 2000, kElems: $("kelems").value.trim(),
@@ -2105,7 +2163,7 @@ function download(bytes, name) {
 function fmtSize(n) { return n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB"; }
 function pickFile(f) {
   if (!f) return;
-  if (!/\.(xlsx|xlsm)$/i.test(f.name)) { note("File harus .xlsx atau .xlsm.", "err"); return; }
+  if (!/\.(xlsx|xlsm|xls)$/i.test(f.name)) { note("File harus .xlsx, .xlsm, atau .xls.", "err"); return; }
   file = f; $("note").hidden = true;
   $("drop").classList.add("has");
   $("drop-what").textContent = f.name;
