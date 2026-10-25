@@ -1,0 +1,31 @@
+{
+  "title_id": "Metode Elemen Hingga Lanjut",
+  "title_en": null,
+  "description_id": "Elemen CST, BDR, plate bending Suhendro, dan flat shell 24-DOF, beserta solver yang dibangun selama kuliah.",
+  "description_en": null,
+  "level": "s2",
+  "semester": null,
+  "course_code": null,
+  "credits": null,
+  "lecturer": null,
+  "cover_image_url": null,
+  "sort_order": 5,
+  "is_published": true,
+  "items": [
+    {
+      "id": "pradana-engine",
+      "title_id": "Pradana Engine — solver elemen hingga di browser",
+      "title_en": null,
+      "description_id": "Unggah model Excel, jalankan analisis flat shell / plate / CST / BDR, lihat bentuk deformasi 3D, dan unduh hasilnya. Semua dihitung di browser.",
+      "kind": "kode",
+      "drive_file_id": null,
+      "drive_folder_id": null,
+      "external_url": "/arsip/pradana-engine.html",
+      "file_size_bytes": 85187,
+      "mime_type": "text/html",
+      "access_level": "public",
+      "sort_order": 1,
+      "is_published": true
+    }
+  ]
+}
