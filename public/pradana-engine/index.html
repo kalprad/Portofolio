@@ -158,6 +158,13 @@
              text-decoration: underline; text-underline-offset: 3px; }
 
   /* ---------- Lembar kontrol ---------- */
+  .member { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--rule); }
+  .member-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; margin-bottom: 6px; }
+  .member-head h2 { margin: 0; }
+  .member-head select { width: auto; min-width: 120px; }
+  .member-head .hint { font-size: 12.5px; color: var(--pencil); }
+  #mchart { height: 260px; }
+  .member .calc { margin-top: 6px; }
   .sheet { margin-top: 26px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 48px; }
   .calc { list-style: none; margin: 0; padding: 0; font: 12.5px/1.5 var(--mono); }
   .calc li { display: flex; align-items: baseline; gap: 6px; padding: 3px 0; }
@@ -306,7 +313,30 @@
       </div>
       <label class="check"><input id="showund" type="checkbox" checked> bentuk awal</label>
       <label class="check"><input id="showedge" type="checkbox" checked> garis mesh</label>
+      <div id="diag-wrap" hidden><span class="lbl" id="lbl-diag">Diagram batang</span>
+        <div class="seg" role="group" aria-labelledby="lbl-diag" id="seg-diag">
+          <button type="button" data-v="none" aria-pressed="true" title="Tampilkan bentuk deformasi">—</button>
+          <button type="button" data-v="N" aria-pressed="false" title="Gaya aksial (NFD)">N</button>
+          <button type="button" data-v="Vy" aria-pressed="false" title="Gaya geser arah y lokal (SFD)">Vy</button>
+          <button type="button" data-v="Vz" aria-pressed="false" title="Gaya geser arah z lokal (SFD)">Vz</button>
+          <button type="button" data-v="T" aria-pressed="false" title="Momen torsi">T</button>
+          <button type="button" data-v="My" aria-pressed="false" title="Momen terhadap y lokal (BMD)">My</button>
+          <button type="button" data-v="Mz" aria-pressed="false" title="Momen terhadap z lokal (BMD)">Mz</button>
+        </div>
+      </div>
     </div>
+
+    <section class="member" id="member" hidden aria-labelledby="h-mem">
+      <div class="member-head">
+        <h2 id="h-mem">Diagram per batang</h2>
+        <label class="lbl" for="mem-el">Batang</label>
+        <select id="mem-el"></select>
+        <span class="hint">Segmen yang segaris digabung jadi satu batang. Bisa juga klik batangnya di gambar 3D.
+          Momen digambar di sisi serat tarik, N positif = tarik.</span>
+      </div>
+      <div id="mchart"></div>
+      <ul class="calc" id="mem-vals"></ul>
+    </section>
 
     <div class="sheet">
       <section aria-labelledby="h-eq">
@@ -1070,7 +1100,8 @@ def build_line(el, xyz):
     el.ke = T.T @ kl @ T
     el.area = L
     el.dofs = node_dofs(el.idx, [0, 1, 2, 3, 4, 5])
-    el.info.update(R=R, T=T, L=L, kl=kl, fer=np.zeros(12), ends=(xyz[el.idx[0]].copy(), xyz[el.idx[1]].copy()))
+    el.info.update(R=R, T=T, L=L, kl=kl, fer=np.zeros(12), ends=(xyz[el.idx[0]].copy(), xyz[el.idx[1]].copy()),
+                   w=np.zeros(3), pts=[])
 
 
 def line_fer_uniform(etype, w, L):
@@ -1113,6 +1144,39 @@ def line_fer_point(etype, P, a, L):
 def line_end_forces(el, U):
     """Gaya ujung elemen di sumbu lokal: k_l T u + FER (konvensi gaya pada elemen)."""
     return el.info["kl"] @ (el.info["T"] @ U[el.dofs]) + el.info["fer"]
+
+
+DIAGRAM_KEYS = ("N", "Vy", "Vz", "T", "My", "Mz")
+
+
+def line_diagram(el, n=21):
+    """Gaya dalam sepanjang batang dari statika segmen kiri (gaya ujung i + beban elemen).
+
+    Konvensi: gaya pada muka potongan kanan segmen kiri, sumbu lokal. N > 0 = tarik.
+    Di x = 0 nilainya -f_i, di x = L sama dengan f_j (gaya ujung elemen).
+    Momen positif My = serat +z lokal tertarik; Mz positif = serat -y lokal tertarik.
+    """
+    L, f = el.info["L"], el.info["end_forces"]
+    w, pts = el.info["w"], el.info["pts"]
+    xs = set(np.linspace(0.0, L, n).tolist())
+    eps = 1e-6 * L
+    for a, _ in pts:   # loncatan gaya geser/aksial di titik beban
+        xs.update(v for v in (a - eps, a + eps) if 0 <= v <= L)
+    x = np.array(sorted(xs))
+    Px = np.zeros((len(x), 3))   # jumlah beban titik di kiri potongan
+    Mx = np.zeros((len(x), 3))   # sum P * (x - a) untuk beban titik di kiri
+    for a, P in pts:
+        left = x > a
+        Px[left] += P
+        Mx[left] += np.outer(x[left] - a, P)
+    out = {"x": x,
+           "N": -(f[0] + w[0] * x + Px[:, 0]),
+           "Vy": -(f[1] + w[1] * x + Px[:, 1]),
+           "Vz": -(f[2] + w[2] * x + Px[:, 2]),
+           "T": -f[3] + 0 * x,
+           "My": -(f[4] + x * f[2] + w[2] * x * x / 2 + Mx[:, 2]),
+           "Mz": -(f[5] - x * f[1] - w[1] * x * x / 2 - Mx[:, 1])}
+    return out
 
 
 def line_samples(el, U, n=11):
@@ -1267,13 +1331,17 @@ def build_loads(model):
             el = model.elems[model.line_ids[uid]]
             L, R = el.info["L"], el.info["R"]
             if kind == "merata":
-                el.info["fer"] += line_fer_uniform(el.etype, R @ np.array([0.0, 0.0, r[1]]), L)
+                w = R @ np.array([0.0, 0.0, r[1]])
+                el.info["fer"] += line_fer_uniform(el.etype, w, L)
+                el.info["w"] = el.info["w"] + w
             else:
                 a = r[1]
                 if not 0 <= a <= L:
                     model.warn(f"Beban titik elemen {uid}: jarak {a} di luar panjang elemen {L:.4g}, diabaikan.")
                     continue
-                el.info["fer"] += line_fer_point(el.etype, R @ np.array([0.0, 0.0, r[2]]), a, L)
+                P = R @ np.array([0.0, 0.0, r[2]])
+                el.info["fer"] += line_fer_point(el.etype, P, a, L)
+                el.info["pts"].append((a, P))
             touched.add(model.line_ids[uid])
     for k in touched:
         el = model.elems[k]
@@ -1979,7 +2047,11 @@ def web_run(in_path, out_path, print_k, k_max_dof, k_elems, parts="all"):
     for el in m.elems:
         if el.etype in ps.LINE_TYPES:
             base, disp = ps.line_samples(el, r["U"])
-            lines.append({"b": base.tolist(), "d": disp.tolist()})
+            dg = ps.line_diagram(el)
+            R = el.info["R"]
+            lines.append({"b": base.tolist(), "d": disp.tolist(), "id": el.uid, "t": el.etype, "n": el.nodes,
+                          "ey": R[1].tolist(), "ez": R[2].tolist(), "L": el.info["L"],
+                          "dg": {k: dg[k].tolist() for k in ("x",) + ps.DIAGRAM_KEYS}})
             continue
         v = next(sh)["VM max"] if el.etype == "SHELL" else next(pl)["Von Mises"]
         areas.append(el.idx.tolist()); area_vm.append(v); vm.append((v, el.uid))
@@ -2122,7 +2194,7 @@ function onDone(m) {
   engine("ready", "siap");
   $("scale").value = "";
   plotted = false;
-  renderSheet(); renderPlot();
+  renderSheet(); setupMembers(); renderPlot();
   updateRun();
   if (runResolve) { runResolve(result); runResolve = null; }
 }
@@ -2227,6 +2299,7 @@ function segInit(id, cb) {
   }));
 }
 segInit("seg-color", (v) => { colorMode = v; renderPlot(); });
+segInit("seg-diag", (v) => { diagMode = v; renderPlot(); renderMember(); });
 segInit("seg-view", (v) => { viewMode = v; camera = CAMERAS[v]; renderPlot(true); });
 ["showund", "showedge"].forEach((id) => $(id).addEventListener("change", () => renderPlot()));
 $("scale").addEventListener("change", () => renderPlot());
@@ -2248,9 +2321,162 @@ function edgeTrace(P, color, width, dash, name, withLines) {
   if (withLines) for (const ln of result.lines) { push(ln.b[0]); push(ln.b[ln.b.length - 1]); x.push(null); y.push(null); z.push(null); }
   return { type: "scatter3d", mode: "lines", x, y, z, name, hoverinfo: "skip", line: { color, width, dash } };
 }
+let diagMode = "none";
+const DIAG_NAME = { N: "gaya aksial N", Vy: "geser Vy", Vz: "geser Vz", T: "torsi T", My: "momen My", Mz: "momen Mz" };
+
+function modelDiag() {
+  let lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  for (const p of result.xyz) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], p[k]); hi[k] = Math.max(hi[k], p[k]); }
+  return Math.hypot(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]) || 1;
+}
+
+let members = [], memberOf = new Map();
+
+// Gabungkan segmen yang segaris & searah, sambung j -> i, dan hanya bertemu satu sama lain
+// (balok yang dipecah mengikuti mesh pelat jadi satu batang utuh untuk diagram).
+function buildMembers() {
+  const ls = result.lines, deg = new Map(), byStart = new Map();
+  ls.forEach((l, k) => {
+    l.n.forEach((n) => deg.set(n, (deg.get(n) || 0) + 1));
+    byStart.set(l.n[0], (byStart.get(l.n[0]) || []).concat(k));
+  });
+  const unit = (l) => { const A = l.b[0], B = l.b[l.b.length - 1]; return [0, 1, 2].map((c) => (B[c] - A[c]) / l.L); };
+  const join = (a, b) => a.t === b.t && a.n[1] === b.n[0] && deg.get(a.n[1]) === 2 &&
+    unit(a).reduce((s, v, c) => s + v * unit(b)[c], 0) > 0.9999;
+  const next = (k) => (byStart.get(result.lines[k].n[1]) || []).find((c) => join(ls[k], ls[c]));
+  const hasPred = new Set();
+  ls.forEach((_, k) => { const nx = next(k); if (nx !== undefined) hasPred.add(nx); });
+  members = []; memberOf = new Map();
+  const used = new Set();
+  const make = (start) => {
+    const chain = [start];
+    used.add(start);
+    for (let nx = next(start); nx !== undefined && !used.has(nx); nx = next(nx)) { chain.push(nx); used.add(nx); }
+    return chain;
+  };
+  ls.forEach((_, k) => { if (!hasPred.has(k)) members.push(make(k)); });
+  ls.forEach((_, k) => { if (!used.has(k)) members.push(make(k)); });
+  members = members.map((chain) => {
+    const segs = chain.map((k) => ls[k]), u = unit(segs[0]);
+    const kind = segs[0].t === "TRUSS" ? "Batang truss" : Math.abs(u[2]) > 0.99 ? "Kolom" : "Balok";
+    const ids = segs.map((l) => l.id);
+    const name = ids.length > 1 ? `${kind} el ${ids[0]}–${ids[ids.length - 1]} (${ids.length} segmen)` : `${kind} el ${ids[0]}`;
+    const dg = { x: [] };
+    ["N", "Vy", "Vz", "T", "My", "Mz"].forEach((key) => { dg[key] = []; });
+    let off = 0;
+    for (const l of segs) {
+      l.dg.x.forEach((x, k) => {
+        dg.x.push(off + x);
+        ["N", "Vy", "Vz", "T", "My", "Mz"].forEach((key) => dg[key].push(l.dg[key][k]));
+      });
+      off += l.L;
+    }
+    return { name, ids, t: segs[0].t, L: off, dg };
+  });
+  members.forEach((m, i) => m.ids.forEach((id) => memberOf.set(String(id), i)));
+}
+
+function setupMembers() {
+  const has = result.lines.length > 0;
+  $("diag-wrap").hidden = !has;
+  $("member").hidden = !has;
+  if (!has) { diagMode = "none"; return; }
+  buildMembers();
+  const sel = $("mem-el"), prev = sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : null;
+  sel.innerHTML = members.map((m, i) => `<option value="${i}">${m.name}</option>`).join("");
+  const keep = members.findIndex((m) => m.name === prev);
+  if (keep >= 0) sel.value = String(keep);
+  renderMember();
+}
+$("mem-el").addEventListener("change", () => renderMember());
+
+function renderMember() {
+  if (!result || !result.lines.length || !members.length) return;
+  const mb = members[Number($("mem-el").value) || 0];
+  const key = diagMode === "none" ? "My" : diagMode;
+  const xs = mb.dg.x, ys = mb.dg[key];
+  const graphite = css("--graphite"), pencil = css("--pencil"), ink = css("--ink"), red = css("--red");
+  let kx = 0;
+  ys.forEach((v, k) => { if (Math.abs(v) > Math.abs(ys[kx])) kx = k; });
+  const ann = (k, pos) => ({ x: xs[k], y: ys[k], text: fmt(ys[k]), showarrow: false, yshift: ys[k] >= 0 ? 10 : -10,
+                             xanchor: pos, font: { family: "B612 Mono, monospace", size: 11, color: ys[k] < 0 ? red : ink } });
+  const anns = [ann(0, "left"), ann(xs.length - 1, "right")];
+  if (kx !== 0 && kx !== xs.length - 1) anns.push(ann(kx, "center"));
+  const ax = { color: pencil, gridcolor: css("--grid-major"), zerolinecolor: graphite, zerolinewidth: 1.5,
+               tickfont: { family: "B612 Mono, monospace", size: 10.5 } };
+  Plotly.react("mchart", [{
+    type: "scatter", mode: "lines", x: xs, y: ys, fill: "tozeroy", line: { color: ink, width: 2 },
+    fillcolor: "rgba(31,79,163,0.12)", hovertemplate: `x = %{x:.3f}<br>${key} = %{y:.4g}<extra></extra>`,
+  }], {
+    margin: { l: 56, r: 16, t: 26, b: 36 }, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    font: { family: "B612, sans-serif", color: graphite, size: 12 }, showlegend: false, annotations: anns,
+    title: { text: `${mb.name} · ${DIAG_NAME[key]} · L = ${fmt(mb.L)}`, font: { size: 13 }, x: 0, xanchor: "left" },
+    xaxis: { ...ax, title: { text: "jarak dari ujung awal batang" }, range: [0, mb.L] },
+    yaxis: { ...ax, title: { text: key } },
+  }, { responsive: true, displaylogo: false, displayModeBar: false });
+  $("mem-vals").innerHTML = ["N", "Vy", "Vz", "T", "My", "Mz"].map((k) => {
+    const v = mb.dg[k];
+    let m = 0;
+    v.forEach((a, i) => { if (Math.abs(a) > Math.abs(v[m])) m = i; });
+    return `<li><span class="k">${k}</span><span class="v">awal ${fmt(v[0])} · akhir ${fmt(v[v.length - 1])} · maks |${fmt(v[m])}| @ x ${fmt(xs[m])}</span></li>`;
+  }).join("");
+}
+
+function renderDiagram(resetCam) {
+  const key = diagMode, graphite = css("--graphite"), pencil = css("--pencil");
+  const ink = css("--ink"), red = css("--red");
+  let maxAbs = 0;
+  for (const ln of result.lines) for (const v of ln.dg[key]) maxAbs = Math.max(maxAbs, Math.abs(v));
+  const size = maxAbs > 1e-12 ? 0.08 * modelDiag() / maxAbs : 0;
+  const dirOf = (ln) => (key === "Vy" ? ln.ey : key === "Mz" ? ln.ey.map((v) => -v) : ln.ez);
+  const mk = (name, color) => ({ type: "scatter3d", mode: "lines", name, x: [], y: [], z: [], text: [], customdata: [],
+                                 line: { color, width: 4 }, hovertemplate: "%{text}<extra></extra>" });
+  const pos = mk(`${key} positif`, ink), neg = mk(`${key} negatif`, red), axis = mk("Batang", graphite);
+  axis.line.width = 5;
+  const add = (tr, pts, txt, id) => {
+    for (const p of pts) { tr.x.push(p[0]); tr.y.push(p[1]); tr.z.push(p[2]); tr.text.push(txt); tr.customdata.push(id); }
+    tr.x.push(null); tr.y.push(null); tr.z.push(null); tr.text.push(null); tr.customdata.push(null);
+  };
+  let best = { v: 0 };
+  for (const ln of result.lines) {
+    const A = ln.b[0], B = ln.b[ln.b.length - 1], L = ln.L;
+    const e = [0, 1, 2].map((k) => (B[k] - A[k]) / L), o = dirOf(ln);
+    const xs = ln.dg.x, vals = ln.dg[key];
+    const base = (k) => [0, 1, 2].map((c) => A[c] + e[c] * xs[k]);
+    const tip = (k) => [0, 1, 2].map((c) => A[c] + e[c] * xs[k] + o[c] * vals[k] * size);
+    const label = (k) => `el ${ln.id} · x = ${fmt(xs[k])}<br>${key} = ${fmt(vals[k])}`;
+    add(axis, [A, B], `el ${ln.id} (${ln.t})`, ln.id);
+    xs.forEach((_, k) => add(vals[k] < 0 ? neg : pos, [base(k), tip(k)], label(k), ln.id));
+    for (let k = 0; k < xs.length - 1; k++) add((vals[k] + vals[k + 1]) / 2 < 0 ? neg : pos, [tip(k), tip(k + 1)], label(k), ln.id);
+    vals.forEach((v, k) => { if (Math.abs(v) > Math.abs(best.v)) best = { v, p: tip(k), id: ln.id, x: xs[k] }; });
+  }
+  const traces = [];
+  if (result.areas.length) {
+    const I = [], J = [], K = [];
+    for (const el of result.areas) for (const t of (el.length === 4 ? [[0, 1, 2], [0, 2, 3]] : [[0, 1, 2]])) {
+      I.push(el[t[0]]); J.push(el[t[1]]); K.push(el[t[2]]);
+    }
+    traces.push({ type: "mesh3d", name: "Elemen 2D", x: result.xyz.map((p) => p[0]), y: result.xyz.map((p) => p[1]),
+                  z: result.xyz.map((p) => p[2]), i: I, j: J, k: K, color: pencil, opacity: 0.18, hoverinfo: "skip",
+                  showlegend: true, flatshading: true });
+  }
+  traces.push(axis, pos, neg);
+  if (best.p) traces.push({ type: "scatter3d", mode: "markers+text", name: `|${key}| maks`, x: [best.p[0]], y: [best.p[1]],
+                            z: [best.p[2]], text: [`${fmt(best.v)} (el ${best.id})`], textposition: "top center",
+                            textfont: { family: "B612 Mono, monospace", size: 11, color: best.v < 0 ? red : ink },
+                            marker: { size: 4, color: best.v < 0 ? red : ink }, hoverinfo: "skip" });
+  $("tb-contour").textContent = `diagram ${key} (maks ${fmt(Math.abs(best.v))})`;
+  return traces;
+}
+
 function renderPlot(resetCam) {
   if (!result) return;
   $("blank").hidden = true;
+  if (diagMode !== "none" && result.lines.length) {
+    const traces = renderDiagram(resetCam);
+    drawPlot(traces, resetCam);
+    return;
+  }
   if (!$("scale").value) $("scale").value = Number(autoScale().toPrecision(3));
   const s = Math.max(0, Number($("scale").value) || 0);
   $("tb-scale").textContent = Number(s.toPrecision(4)) + "×";
@@ -2292,7 +2518,10 @@ function renderPlot(resetCam) {
       x.push(null); y.push(null); z.push(null); c.push(null);
     }
     const vmMode = colorMode === "vm";
-    traces.push({ type: "scatter3d", mode: "lines", x, y, z, name: "Elemen 1D", hoverinfo: "skip",
+    const cd = [];
+    for (const ln of result.lines) { ln.b.forEach(() => cd.push(ln.id)); cd.push(null); }
+    traces.push({ type: "scatter3d", mode: "lines", x, y, z, name: "Elemen 1D", customdata: cd,
+                  hovertemplate: "el %{customdata}<extra></extra>",
                   line: vmMode ? { color: pencil, width: 5 }
                                : { color: c, colorscale: "Jet", cmin, cmax, width: 6,
                                    showscale: !result.areas.length, colorbar } });
@@ -2303,6 +2532,12 @@ function renderPlot(resetCam) {
   traces.push({ type: "scatter3d", mode: "markers", x: [D[iu][0]], y: [D[iu][1]], z: [D[iu][2]], name: "max |U|",
                 marker: { size: 5, color: red, symbol: "circle" },
                 hovertemplate: `max |U| = ${result.kpi.umax.toExponential(3)}<br>node ${result.kpi.unode}<extra></extra>` });
+  drawPlot(traces, resetCam);
+}
+
+let clickBound = false;
+function drawPlot(traces, resetCam) {
+  const graphite = css("--graphite"), pencil = css("--pencil");
   const ax = (t) => ({ title: { text: t }, color: pencil, gridcolor: css("--grid-major"), zerolinecolor: pencil,
                        showbackground: false, tickfont: { family: "B612 Mono, monospace", size: 10 } });
   const layout = {
@@ -2318,6 +2553,16 @@ function renderPlot(resetCam) {
   plotted = true;
   Plotly.react("plot", traces, layout, { responsive: true, displaylogo: false, displayModeBar: "hover",
     modeBarButtonsToRemove: ["resetCameraLastSave3d"], toImageButtonOptions: { filename: "deformed_shape", scale: 2 } });
+  if (!clickBound) {
+    clickBound = true;
+    $("plot").on("plotly_click", (ev) => {
+      const id = ev.points && ev.points[0] && ev.points[0].customdata;
+      if (id === null || id === undefined || !result || !result.lines.length) return;
+      if (!memberOf.has(String(id))) return;
+      $("mem-el").value = String(memberOf.get(String(id)));
+      renderMember();
+    });
+  }
 }
 
 /* ---------- Mulai ---------- */
