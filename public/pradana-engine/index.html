@@ -49,6 +49,8 @@
   .top .sub { color: var(--pencil); }
   .top .right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
   #engine { font: 12.5px var(--mono); color: var(--pencil); }
+  .home { font-size: 13px; color: var(--ink); text-decoration: none; }
+  .home:hover { text-decoration: underline; text-underline-offset: 3px; }
   #engine[data-state="error"] { color: var(--red); }
   .theme { background: none; border: 1px solid var(--rule); border-radius: 3px; color: var(--pencil);
            width: 32px; height: 32px; display: grid; place-items: center; cursor: pointer; }
@@ -195,6 +197,7 @@
   <h1>Pradana Engine</h1>
   <span class="sub">Solver elemen hingga 6-DOF: flat shell, plate Suhendro, CST, BDR</span>
   <div class="right">
+    <a class="home" id="home" href="/" hidden>← rizki haikal</a>
     <span id="engine" data-state="loading" role="status" aria-live="polite">engine: memuat…</span>
     <button class="theme" id="theme" type="button" aria-label="Ganti tema"><svg class="i"><use href="#ic-monitor"/></svg></button>
   </div>
@@ -1863,6 +1866,8 @@ function renderPlot(resetCam) {
 }
 
 /* ---------- Mulai ---------- */
+// Tautan balik ke situs hanya saat halaman ini disajikan dari website (/pradana-engine)
+if (location.protocol.startsWith("http") && location.pathname.startsWith("/pradana-engine")) $("home").hidden = false;
 setSteps(BOOT_STEPS);
 markStep(0);
 worker.postMessage({ type: "init", solver: $("solver-src").textContent, glue: GLUE });

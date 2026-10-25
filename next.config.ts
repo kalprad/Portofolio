@@ -20,6 +20,13 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: { bodySizeLimit: "4mb" },
   },
+
+  // Pradana Engine adalah halaman HTML mandiri (solver FEA berbasis Pyodide)
+  // di public/pradana-engine/. Rewrite ini membuatnya terbuka di
+  // /pradana-engine tanpa akhiran index.html.
+  async rewrites() {
+    return [{ source: "/pradana-engine", destination: "/pradana-engine/index.html" }];
+  },
 };
 
 export default nextConfig;

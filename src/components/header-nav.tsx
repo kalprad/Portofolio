@@ -13,6 +13,7 @@ const TAUTAN = [
   { href: "/portofolio", label: "Portofolio" },
   { href: "/tulisan", label: "Tulisan" },
   { href: "/arsip", label: "Arsip Kuliah" },
+  { href: "/pradana-engine", label: "Pradana Engine" },
   { href: "/cv", label: "CV" },
 ];
 

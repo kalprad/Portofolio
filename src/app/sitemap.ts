@@ -10,7 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getArchiveCollections(),
   ]);
 
-  const statis = ["", "/tentang", "/cv", "/portofolio", "/tulisan", "/arsip"].map((p) => ({
+  const statis = ["", "/tentang", "/cv", "/portofolio", "/tulisan", "/arsip", "/pradana-engine"].map((p) => ({
     url: `${BASE}${p}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
