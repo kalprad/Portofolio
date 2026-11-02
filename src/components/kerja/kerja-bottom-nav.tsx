@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarClock, FolderKanban, Gauge } from "lucide-react";
+import { CalendarClock, FolderKanban, Gauge, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { WorkProject } from "@/lib/workspace-types";
 
@@ -18,6 +18,7 @@ export function KerjaBottomNav({ proyek }: { proyek: WorkProject[] }) {
 
   const tabs = [
     { href: "/ultraproduktif", label: "Ringkasan", icon: Gauge, aktif: pathname === "/ultraproduktif" },
+    { href: "/ultraproduktif/2-0", label: "2.0", icon: Rocket, aktif: pathname.startsWith("/ultraproduktif/2-0") },
     { href: "/ultraproduktif/jadwal", label: "Jadwal", icon: CalendarClock, aktif: pathname === "/ultraproduktif/jadwal" },
     {
       href: proyekAktif ? `/ultraproduktif/proyek/${proyekAktif.id}` : "/ultraproduktif",
