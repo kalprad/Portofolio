@@ -18,7 +18,11 @@ const TAUTAN = [
 ];
 
 /** Tautan tambahan yang cuma tampil buat pemilik situs yang sedang masuk. */
-const TAUTAN_ADMIN = [{ href: "/ultraproduktif", label: "Ultraproduktif" }];
+const TAUTAN_ADMIN: { href: string; label: string; kecuali?: string }[] = [
+  // `kecuali`: awalan rute yang punya tautan sendiri, supaya dua tautan tidak menyala bersamaan.
+  { href: "/ultraproduktif", label: "Ultraproduktif", kecuali: "/ultraproduktif/2-0" },
+  { href: "/ultraproduktif/2-0", label: "Ultra 2.0" },
+];
 
 export function HeaderNav({
   nama,
@@ -31,7 +35,7 @@ export function HeaderNav({
 }) {
   const pathname = usePathname();
   const [terbuka, setTerbuka] = useState(false);
-  const tautan = isAdmin ? [...TAUTAN, ...TAUTAN_ADMIN] : TAUTAN;
+  const tautan: { href: string; label: string; kecuali?: string }[] = isAdmin ? [...TAUTAN, ...TAUTAN_ADMIN] : TAUTAN;
   // Bawa halaman yang lagi dibuka sebagai tujuan — supaya kalau perlu login
   // ulang (mis. Ultraproduktif butuh persetujuan izin Drive baru), tombol
   // "Masuk" ini tidak "lupa" dan malah membawa balik ke beranda begitu saja.
@@ -50,7 +54,8 @@ export function HeaderNav({
     };
   }, [terbuka]);
 
-  function aktif(href: string) {
+  function aktif(href: string, kecuali?: string) {
+    if (kecuali && (pathname === kecuali || pathname.startsWith(`${kecuali}/`))) return false;
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 
@@ -71,10 +76,10 @@ export function HeaderNav({
                 <li key={t.href}>
                   <Link
                     href={t.href}
-                    aria-current={aktif(t.href) ? "page" : undefined}
+                    aria-current={aktif(t.href, t.kecuali) ? "page" : undefined}
                     className={cn(
                       "inline-flex min-h-[36px] items-center rounded-full px-4 text-sm transition-colors duration-200",
-                      aktif(t.href)
+                      aktif(t.href, t.kecuali)
                         ? "bg-foreground font-medium text-background"
                         : "text-muted-foreground hover:text-foreground",
                     )}
@@ -132,10 +137,10 @@ export function HeaderNav({
                 <li key={t.href}>
                   <Link
                     href={t.href}
-                    aria-current={aktif(t.href) ? "page" : undefined}
+                    aria-current={aktif(t.href, t.kecuali) ? "page" : undefined}
                     className={cn(
                       "flex min-h-[52px] items-center border-b border-border text-base transition-colors duration-200",
-                      aktif(t.href) ? "font-medium text-foreground" : "text-muted-foreground",
+                      aktif(t.href, t.kecuali) ? "font-medium text-foreground" : "text-muted-foreground",
                     )}
                   >
                     {t.label}
