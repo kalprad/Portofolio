@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarClock, Gauge, Plus } from "lucide-react";
+import { CalendarClock, Gauge, Plus, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { WorkProject } from "@/lib/workspace-types";
 
@@ -29,6 +29,18 @@ export function KerjaSidebar({ proyek }: { proyek: WorkProject[] }) {
           >
             <Gauge className="size-4 shrink-0" aria-hidden />
             Ringkasan
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/ultraproduktif/2-0"
+            className={cn(
+              "flex min-h-[40px] items-center gap-2.5 rounded px-3 text-sm transition-colors duration-200",
+              pathname.startsWith("/ultraproduktif/2-0") ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            <Rocket className="size-4 shrink-0" aria-hidden />
+            Ultraproduktif 2.0
           </Link>
         </li>
         <li>

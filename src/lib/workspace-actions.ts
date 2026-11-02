@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { buatEvent, calendarConfigured, hapusEvent, perbaruiEvent } from "@/lib/calendar";
@@ -556,4 +557,108 @@ export async function kirimRingkasanProyek(
   }
 
   return { ok: true, message: `Ringkasan terkirim ke ${ke}.` };
+}
+
+// --- Impor brief (Ultraproduktif 2.0) ----------------------------------------------
+
+const imporSkema = z.object({
+  projects: z
+    .array(
+      z.object({
+        key: z.string().min(1),
+        name: z.string().min(1),
+        description: z.string().nullish(),
+        color: z.string().nullish(),
+      }),
+    )
+    .min(1),
+  tasks: z.array(
+    z.object({
+      project: z.string().min(1),
+      title: z.string().min(1),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      time: z.string().regex(/^\d{2}:\d{2}$/).nullish(),
+      done: z.boolean().optional(),
+      hard: z.boolean().optional(),
+      note: z.string().nullish(),
+    }),
+  ),
+});
+
+/** Batas pembuatan baris baru per proses — Sheets API dibatasi kuota per menit. Jalankan ulang untuk sisanya (impor ini idempotent). */
+const IMPOR_BATAS_BARU = 40;
+
+export async function imporBrief(_prev: FormState, formData: FormData): Promise<FormState> {
+  await pastikanAdmin();
+  const belumSiap = butuhSheets();
+  if (belumSiap) return belumSiap;
+
+  let mentah: unknown;
+  try {
+    mentah = JSON.parse(String(formData.get("json") ?? ""));
+  } catch {
+    return { ok: false, message: "Bukan JSON yang valid." };
+  }
+  const parsed = imporSkema.safeParse(mentah);
+  if (!parsed.success) {
+    const isu = parsed.error.issues[0];
+    return { ok: false, message: `Bentuk JSON tidak sesuai: ${isu.path.join(".")} — ${isu.message}` };
+  }
+  const { projects, tasks } = parsed.data;
+
+  try {
+    const proyekAda = await ws.listProjects();
+    const idPerKunci = new Map<string, string>();
+    let proyekBaru = 0;
+
+    for (const p of projects) {
+      const sama = proyekAda.find((x) => x.judul === p.name);
+      if (sama) {
+        idPerKunci.set(p.key, sama.id);
+        continue;
+      }
+      const dibuat = await ws.createProject({ judul: p.name, deskripsi: p.description ?? null, warna: p.color ?? null });
+      idPerKunci.set(p.key, dibuat.id);
+      proyekBaru++;
+    }
+
+    const tugasAda = await ws.listTasks();
+    const kunciAda = new Set(tugasAda.map((t) => `${t.proyekId}|${t.judul}`));
+    let tugasBaru = 0;
+    let dilewati = 0;
+    let tersisa = 0;
+
+    for (const t of tasks) {
+      const proyekId = idPerKunci.get(t.project);
+      if (!proyekId) continue;
+      if (kunciAda.has(`${proyekId}|${t.title}`)) {
+        dilewati++;
+        continue;
+      }
+      if (tugasBaru >= IMPOR_BATAS_BARU) {
+        tersisa++;
+        continue;
+      }
+      await ws.createTask({
+        proyekId,
+        judul: t.title,
+        deskripsi: t.note ?? null,
+        status: t.done ? "done" : "todo",
+        prioritas: t.hard ? "tinggi" : "sedang",
+        tenggat: `${t.date}T${t.time ?? "09:00"}`,
+      });
+      tugasBaru++;
+    }
+
+    refreshKerja();
+    revalidatePath("/ultraproduktif/2-0");
+    return {
+      ok: true,
+      message:
+        `Proyek baru ${proyekBaru}, tugas baru ${tugasBaru}, sudah ada ${dilewati}.` +
+        (tersisa > 0 ? ` Sisa ${tersisa} tugas belum masuk (batas kuota) — kirim ulang berkas yang sama setelah semenit.` : ""),
+    };
+  } catch (err) {
+    return pesanGalat(err);
+  }
 }
