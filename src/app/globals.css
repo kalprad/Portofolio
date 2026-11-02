@@ -344,3 +344,29 @@
   a { text-decoration: none; color: #000; }
   .print-compact > * + * { margin-top: 0.5rem; }
 }
+
+/* ==========================================================================
+   Ultraproduktif 2.0 — palet brief (cetak biru + warna per proyek)
+   ========================================================================== */
+:root {
+  --bp: #0f2c6e;
+  --bp-ink: #eef4ff;
+  --bp-dim: #9db6e6;
+  --amber: #f2b233;
+  --k-biru: #1d4ed8;
+  --k-hijau: #15803d;
+  --k-kuning: #b45309;
+  --k-merah: #b42318;
+  --k-ungu: #6d28d9;
+  --k-netral: #475569;
+}
+
+.dark {
+  --bp: #0a1d4a;
+  --k-biru: #8aa8ff;
+  --k-hijau: #4ade80;
+  --k-kuning: #fbbf24;
+  --k-merah: #f87171;
+  --k-ungu: #b39dfb;
+  --k-netral: #a3b1c6;
+}

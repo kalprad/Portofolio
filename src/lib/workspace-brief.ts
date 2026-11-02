@@ -54,6 +54,12 @@ export interface StatProyek {
 export interface BriefData {
   hariIni: string;
   hero: TugasBrief | null;
+  /** Maksimal 3 hal yang dikerjakan dulu: terlambat, hari ini, lalu tenggat terdekat. */
+  fokus: TugasBrief[];
+  /** Tenggat keras (prioritas tinggi) berikutnya, di luar hero. */
+  keras: TugasBrief[];
+  /** Semua tugas bertenggat milik proyek aktif, termasuk yang selesai — bahan peta jadwal. */
+  semua: TugasBrief[];
   terlambat: TugasBrief[];
   hariIniTugas: TugasBrief[];
   hariIniJadwal: WorkSchedule[];
@@ -120,9 +126,17 @@ export function susunBrief(
     // Proyek dengan tenggat terdekat naik ke atas; yang tak punya tenggat di bawah.
     .sort((a, b) => (a.berikutnya?.tenggat ?? "9999").localeCompare(b.berikutnya?.tenggat ?? "9999"));
 
+  const fokus = [...terlambat, ...hariIniTugas, ...mendatang.filter((t) => t.selisih > 0)]
+    .filter((t, i, a) => a.findIndex((x) => x.id === t.id) === i)
+    .slice(0, 3);
+  const keras = mendatang.filter((t) => t.prioritas === "tinggi" && t.id !== hero?.id).slice(0, 4);
+
   return {
     hariIni,
     hero,
+    fokus,
+    keras,
+    semua: berTenggat,
     terlambat,
     hariIniTugas,
     hariIniJadwal,
@@ -135,4 +149,10 @@ export function susunBrief(
       sepekan: mendatang.filter((t) => t.selisih <= 7).length,
     },
   };
+}
+
+/** Nama warna proyek (`WorkProject.warna`) -> variabel CSS di globals.css. Tanpa warna = netral. */
+export function warnaProyek(warna: string | null | undefined): string {
+  const ok = ["biru", "hijau", "kuning", "merah", "ungu"];
+  return `var(--k-${warna && ok.includes(warna) ? warna : "netral"})`;
 }
