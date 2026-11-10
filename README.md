@@ -377,6 +377,25 @@ otomatis muncul di Calendar, dan sebaliknya — edit langsung di Calendar
    `@group.calendar.google.com`, BUKAN kata `primary`.
 4. Isi `GOOGLE_CALENDAR_ID` dengan ID itu.
 
+### 10.6 Jadwal per jam: sambungkan kalender kuliah (baca-saja)
+
+Halaman **Jadwal per hari** (`/ultraproduktif/hari`) menampilkan satu hari per
+jam: tenggat tugas dan tab Jadwal dari Sheets, plus acara dari kalender yang
+kamu daftarkan di sini. Berbeda dari kalender sinkron (§10.2), kalender ini
+**hanya dibaca** — situs tidak menulis apa pun ke dalamnya.
+
+1. Di Google Calendar, buka **Setelan dan berbagi** kalender yang berisi jadwal
+   kuliah (kalender utama juga bisa) → **Bagikan dengan orang tertentu** →
+   tambahkan `GOOGLE_SERVICE_ACCOUNT_EMAIL` dengan izin **"Lihat semua detail
+   acara"**.
+2. Isi `GOOGLE_CALENDAR_READ_IDS` dengan ID kalendernya. Untuk kalender utama,
+   ID-nya alamat Gmail kamu; untuk kalender lain, salin "ID kalender
+   integrasi". Beberapa kalender dipisah koma.
+3. Deploy ulang. Jangan masukkan `GOOGLE_CALENDAR_ID` (kalender sinkron) ke
+   daftar ini: isinya cermin tugas/jadwal yang sudah tampil dari Sheets.
+
+Tanpa variabel ini halamannya tetap jalan, hanya tanpa jadwal kuliah.
+
 ### 10.3 Sinkron masuk berjalan lewat cron
 
 Sisi "situs → Calendar" terjadi seketika setiap tugas/jadwal disimpan. Sisi
