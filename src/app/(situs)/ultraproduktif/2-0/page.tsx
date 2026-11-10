@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { CalendarClock, ChevronDown, Upload } from "lucide-react";
+import { CalendarClock, CalendarDays, ChevronDown, Upload } from "lucide-react";
 import { Badge, ButtonLink, EmptyState } from "@/components/ui/primitives";
 import { BriefRunway } from "@/components/kerja/brief-runway";
 import { TombolSelesai } from "@/components/kerja/tombol-selesai";
@@ -109,10 +109,16 @@ export default async function Ultraproduktif20Page() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between gap-4">
         <p className="eyebrow">{formatTanggalLokal(hariIni)}</p>
-        <ButtonLink href="/ultraproduktif/2-0/impor" variant="outline" size="sm">
-          <Upload className="size-4" aria-hidden />
-          Impor data
-        </ButtonLink>
+        <div className="flex items-center gap-2">
+          <ButtonLink href="/ultraproduktif/hari" variant="outline" size="sm">
+            <CalendarDays className="size-4" aria-hidden />
+            Jadwal per jam
+          </ButtonLink>
+          <ButtonLink href="/ultraproduktif/2-0/impor" variant="outline" size="sm">
+            <Upload className="size-4" aria-hidden />
+            Impor data
+          </ButtonLink>
+        </div>
       </div>
 
       {proyek.length === 0 ? (
