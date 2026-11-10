@@ -1,6 +1,5 @@
 import "server-only";
 import { googleHeaders, serviceAccountConfigured } from "@/lib/google";
-import { dariISOkeWIB } from "@/lib/workspace-utils";
 
 /**
  * Sinkron dua arah dengan satu Google Calendar, lewat service account yang
@@ -170,95 +169,4 @@ export async function daftarEvent(opsi: {
     nextSyncToken: data.nextSyncToken ?? null,
     kedaluwarsa: false,
   };
-}
-
-/* ==========================================================================
-   Baca-saja: kalender tambahan untuk tampilan jadwal per jam
-   ========================================================================== */
-
-/**
- * ID kalender tambahan yang hanya DIBACA (bukan disinkronkan) — misalnya
- * kalender pribadi berisi jadwal kuliah. Dipisah koma di
- * `GOOGLE_CALENDAR_READ_IDS`. Kalender itu harus dibagikan ke service account
- * dengan izin "Lihat semua detail acara".
- *
- * Kalender sinkron (`GOOGLE_CALENDAR_ID`) sengaja TIDAK ikut dibaca di sini:
- * isinya hanyalah cermin tugas/jadwal dari Sheets yang sudah ditampilkan dari
- * sumber aslinya, jadi dibaca lagi cuma bikin dobel.
- */
-export function kalenderBacaIds(): string[] {
-  return (process.env.GOOGLE_CALENDAR_READ_IDS ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-export interface AcaraLuar {
-  id: string;
-  kalender: string;
-  judul: string;
-  /** "YYYY-MM-DDTHH:mm" WIB. Untuk acara seharian: "YYYY-MM-DD". */
-  mulai: string;
-  selesai: string;
-  seharian: boolean;
-  lokasi: string | null;
-}
-
-/**
- * Acara dari semua kalender baca-saja yang beririsan dengan rentang
- * [tglMulai, tglAkhir) — tanggal "YYYY-MM-DD" WIB. Acara berulang sudah
- * diurai (`singleEvents`). Satu kalender gagal tidak menggagalkan yang lain:
- * pesannya dikumpulkan di `galat`.
- */
-export async function acaraRentang(
-  tglMulai: string,
-  tglAkhir: string,
-): Promise<{ acara: AcaraLuar[]; galat: string[] }> {
-  const ids = kalenderBacaIds();
-  if (ids.length === 0 || !serviceAccountConfigured()) return { acara: [], galat: [] };
-
-  const acara: AcaraLuar[] = [];
-  const galat: string[] = [];
-  const headers = await googleHeaders();
-
-  await Promise.all(
-    ids.map(async (id) => {
-      const url = new URL(`${CAL_API}/calendars/${encodeURIComponent(id)}/events`);
-      url.searchParams.set("singleEvents", "true");
-      url.searchParams.set("orderBy", "startTime");
-      url.searchParams.set("maxResults", "250");
-      url.searchParams.set("timeMin", `${tglMulai}T00:00:00+07:00`);
-      url.searchParams.set("timeMax", `${tglAkhir}T00:00:00+07:00`);
-      try {
-        const res = await fetch(url, { headers, cache: "no-store" });
-        if (!res.ok) {
-          galat.push(`${id} (${res.status})`);
-          return;
-        }
-        const data = (await res.json()) as { summary?: string; items?: CalendarEvent[] };
-        for (const e of data.items ?? []) {
-          if (e.status === "cancelled") continue;
-          // Cermin tugas/jadwal buatan situs: sudah tampil dari Sheets.
-          if (e.extendedProperties?.private?.kerjaId) continue;
-          const seharian = Boolean(e.start?.date && !e.start?.dateTime);
-          const mulai = e.start?.dateTime ? dariISOkeWIB(e.start.dateTime) : e.start?.date;
-          const selesai = e.end?.dateTime ? dariISOkeWIB(e.end.dateTime) : e.end?.date;
-          if (!mulai || !selesai) continue;
-          acara.push({
-            id: `${id}:${e.id}`,
-            kalender: data.summary ?? id,
-            judul: e.summary ?? "(tanpa judul)",
-            mulai,
-            selesai,
-            seharian,
-            lokasi: e.location ?? null,
-          });
-        }
-      } catch (err) {
-        galat.push(`${id} (${err instanceof Error ? err.message : "gagal"})`);
-      }
-    }),
-  );
-
-  return { acara, galat };
 }

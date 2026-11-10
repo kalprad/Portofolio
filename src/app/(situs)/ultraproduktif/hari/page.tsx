@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge, Button, EmptyState } from "@/components/ui/primitives";
 import { HariTimeline } from "@/components/kerja/hari-timeline";
-import { acaraRentang, kalenderBacaIds } from "@/lib/calendar";
+import { kuliahPadaTanggal } from "@/lib/jadwal-kuliah";
 import { awalPekan, tambahHari, warnaProyek } from "@/lib/workspace-brief";
 import { susunHari, tanggalValid } from "@/lib/workspace-hari";
 import { listProjects, listSchedule, listTasks, workspaceSheetsConfigured } from "@/lib/workspace-sheets";
@@ -31,24 +31,18 @@ export default async function HariPage({ searchParams }: { searchParams: Promise
     );
   }
 
-  const [proyek, jadwal, tugas, luar] = await Promise.all([
-    listProjects(),
-    listSchedule(),
-    listTasks(),
-    acaraRentang(tambahHari(tanggal, -1), tambahHari(tanggal, 2)),
-  ]);
+  const [proyek, jadwal, tugas] = await Promise.all([listProjects(), listSchedule(), listTasks()]);
 
   const data = susunHari({
     tanggal,
     proyek,
     tugas,
     jadwal,
-    acara: luar.acara,
+    acara: kuliahPadaTanggal(tanggal),
     warnaProyek,
     warnaKalender: "var(--k-netral)",
   });
 
-  const adaKalenderBaca = kalenderBacaIds().length > 0;
   const sekarangMenit =
     tanggal === hariIni ? Number(sekarangWIB().slice(11, 13)) * 60 + Number(sekarangWIB().slice(14, 16)) : null;
 
@@ -132,24 +126,11 @@ export default async function HariPage({ searchParams }: { searchParams: Promise
         })}
       </nav>
 
-      {!adaKalenderBaca ? (
-        <p className="rounded-lg border border-border bg-surface p-4 text-sm text-muted-foreground">
-          Jadwal kuliah dari Google Calendar belum tersambung, jadi yang tampil baru tab Jadwal dan tenggat tugas. Bagikan kalender
-          kuliah ke service account (izin &quot;Lihat semua detail acara&quot;), lalu isi <code>GOOGLE_CALENDAR_READ_IDS</code>.
-          Langkahnya ada di README §10.6.
-        </p>
-      ) : null}
-      {luar.galat.length > 0 ? (
-        <p className="rounded-lg border border-destructive/40 bg-surface p-4 text-sm text-destructive">
-          Gagal membaca kalender: {luar.galat.join(", ")}. Pastikan kalender dibagikan ke service account.
-        </p>
-      ) : null}
-
       <HariTimeline data={data} sekarangMenit={sekarangMenit} />
 
       <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-subtle">
         <span className="flex items-center gap-1.5">
-          <Badge tone="neutral">Kalender</Badge> kuliah dan acara
+          <Badge tone="neutral">Kuliah</Badge> jadwal kuliah semester ini
         </span>
         <span className="flex items-center gap-1.5">
           <Badge tone="accent">Jadwal</Badge> dari tab Jadwal
