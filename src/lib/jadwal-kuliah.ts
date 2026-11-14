@@ -29,7 +29,7 @@ export const ATURAN_KULIAH: AturanKuliah[] = [
   { kunci: "adsl", judul: "Analisis Dinamika Struktur Lanjut (A-STR)", hari: 1, mulai: "13:00", selesai: "15:30", lokasi: "Ruang Kelas 5.1", dari: "2026-08-03", sampai: "2026-11-16" },
   // MEHL: Senin sampai 9 Nov, lalu pindah ke Rabu 13.00 (Ruang 235) mulai 11 Nov (pertemuan 11-14, Prof. Bambang Supriyadi).
   { kunci: "mehl-senin", judul: "Metode Elemen Hingga Lanjut (A-STR)", hari: 1, mulai: "15:30", selesai: "17:10", lokasi: "Ruang Kelas 5.2", dari: "2026-08-03", sampai: "2026-11-09" },
-  { kunci: "mehl-rabu", judul: "Metode Elemen Hingga Lanjut (A-STR)", hari: 3, mulai: "13:00", selesai: "14:40", lokasi: "Ruang 235", dari: "2026-11-11", sampai: "2026-11-18", catatan: "Jam selesai 14.40 perkiraan (100 menit)" },
+  { kunci: "mehl-rabu", judul: "Metode Elemen Hingga Lanjut (A-STR)", hari: 3, mulai: "13:00", selesai: "14:40", lokasi: "Ruang 235", dari: "2026-11-11", sampai: "2026-12-02", catatan: "Jam selesai 14.40 perkiraan (100 menit)" },
   { kunci: "mnl", judul: "Metode Numerik Lanjut (A-STR)", hari: 2, mulai: "07:15", selesai: "09:45", lokasi: "Ruang Kelas C MSTT 214A", dari: "2026-08-04", sampai: "2026-11-17" },
   { kunci: "pis1", judul: "Perancangan Infrastruktur Sipil 1 (Kelas B)", hari: 4, mulai: "10:00", selesai: "11:40", lokasi: "Ruang Kuliah 211", dari: "2026-08-06", sampai: "2026-11-19" },
   { kunci: "statek", judul: "Statistika Teknik (A-STR)", hari: 4, mulai: "13:00", selesai: "15:30", lokasi: "Ruang Kelas 5.1", dari: "2026-08-06", sampai: "2026-11-19" },
