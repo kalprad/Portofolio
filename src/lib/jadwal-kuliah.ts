@@ -26,7 +26,9 @@ interface AturanKuliah {
 export const ATURAN_KULIAH: AturanKuliah[] = [
   { kunci: "etpi", judul: "Etika dan Teknik Penulisan Ilmiah (Kelas C)", hari: 1, mulai: "07:00", selesai: "09:30", lokasi: "Ruang Kelas 9B1 Lt.9", dari: "2026-08-03", sampai: "2026-11-16" },
   { kunci: "mekkon", judul: "Mekanika Kontinum (A-STR)", hari: 1, mulai: "10:00", selesai: "11:40", lokasi: "Ruang Kuliah 212", dari: "2026-08-03", sampai: "2026-11-16" },
-  { kunci: "adsl", judul: "Analisis Dinamika Struktur Lanjut (A-STR)", hari: 1, mulai: "13:00", selesai: "15:30", lokasi: "Ruang Kelas 5.1", dari: "2026-08-03", sampai: "2026-11-16" },
+  // ADSL: Senin sampai 9 Nov, lalu pindah ke Kamis 07.30 mulai 19 Nov (jam selesai dan ruang belum dipastikan).
+  { kunci: "adsl-senin", judul: "Analisis Dinamika Struktur Lanjut (A-STR)", hari: 1, mulai: "13:00", selesai: "15:30", lokasi: "Ruang Kelas 5.1", dari: "2026-08-03", sampai: "2026-11-09" },
+  { kunci: "adsl-kamis", judul: "Analisis Dinamika Struktur Lanjut (A-STR)", hari: 4, mulai: "07:30", selesai: "10:00", lokasi: "Ruang belum diketahui", dari: "2026-11-19", sampai: "2026-11-19", catatan: "Jam selesai perkiraan (150 menit)" },
   // MEHL: Senin sampai 9 Nov, lalu pindah ke Rabu 13.00 (Ruang 235) mulai 11 Nov (pertemuan 11-14, Prof. Bambang Supriyadi).
   { kunci: "mehl-senin", judul: "Metode Elemen Hingga Lanjut (A-STR)", hari: 1, mulai: "15:30", selesai: "17:10", lokasi: "Ruang Kelas 5.2", dari: "2026-08-03", sampai: "2026-11-09" },
   { kunci: "mehl-rabu", judul: "Metode Elemen Hingga Lanjut (A-STR)", hari: 3, mulai: "13:00", selesai: "14:40", lokasi: "Ruang 235", dari: "2026-11-11", sampai: "2026-12-02", catatan: "Jam selesai 14.40 perkiraan (100 menit)" },
